@@ -30,8 +30,7 @@ public final class SoundRenderer {
         MatrixStack matrices = context.matrices();
         VertexConsumerProvider consumers = context.consumers();
 
-        Vec3d camera = client.gameRenderer.getCamera().getPos();
-
+        Vec3d camera = client.gameRenderer.getCamera().getCameraPos();
         VertexConsumer vertex = consumers.getBuffer(
             RenderLayers.debugFilledBox()
         );
