@@ -5,6 +5,9 @@
   "name": "Test Don",
   "description": "Test Don Sound Visualizer",
   "environment": "client",
+  "mixins": [
+    "testdon.mixins.json"
+  ],
   "entrypoints": {
     "client": [
       "dev.testdon.TestDonClient"
