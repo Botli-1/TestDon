@@ -56,7 +56,11 @@ public final class SoundRenderer {
                 continue;
             }
 
-            if (entity.getPos().squaredDistanceTo(camera)
+                        double dx = entity.getX() - camera.x;
+            double dy = entity.getY() - camera.y;
+            double dz = entity.getZ() - camera.z;
+
+            if (dx * dx + dy * dy + dz * dz
                     > maxDistance * maxDistance) {
                 continue;
             }
