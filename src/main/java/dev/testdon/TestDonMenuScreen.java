@@ -14,7 +14,7 @@ public final class TestDonMenuScreen extends Screen {
     @Override
     protected void init() {
         int x = this.width / 2 - 90;
-        int y = this.height / 2 - 60;
+        int y = this.height / 2 - 78;
 
         this.addDrawableChild(
             ButtonWidget.builder(
@@ -66,9 +66,21 @@ public final class TestDonMenuScreen extends Screen {
 
         this.addDrawableChild(
             ButtonWidget.builder(
+                Text.literal("Chunk Finder: " + (TestDonSettings.chunkFinder ? "ON" : "OFF")),
+                button -> {
+                    TestDonSettings.chunkFinder = !TestDonSettings.chunkFinder;
+                    button.setMessage(Text.literal(
+                        "Chunk Finder: " + (TestDonSettings.chunkFinder ? "ON" : "OFF")
+                    ));
+                }
+            ).dimensions(x, y + 104, 180, 20).build()
+        );
+
+        this.addDrawableChild(
+            ButtonWidget.builder(
                 Text.literal("Done"),
                 button -> this.close()
-            ).dimensions(x, y + 110, 180, 20).build()
+            ).dimensions(x, y + 136, 180, 20).build()
         );
     }
 }
