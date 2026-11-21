@@ -8,6 +8,7 @@ import net.minecraft.client.render.RenderLayers;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.entity.Entity;
 import net.minecraft.util.math.Vec3d;
 
 public final class SoundRenderer {
@@ -30,16 +31,52 @@ public final class SoundRenderer {
         MatrixStack matrices = context.matrices();
         VertexConsumerProvider consumers = context.consumers();
 
+        if (matrices == null || consumers == null) {
+            return;
+        }
+
         Vec3d camera = client.gameRenderer.getCamera().getCameraPos();
+
         VertexConsumer vertex = consumers.getBuffer(
             RenderLayers.debugFilledBox()
         );
+
+        double maxDistance =
+            client.options.getViewDistance().getValue() * 16.0;
 
         matrices.push();
         matrices.translate(-camera.x, -camera.y, -camera.z);
 
         MatrixStack.Entry entry = matrices.peek();
 
+        // Entity ESP
+        for (Entity entity : client.world.getEntities()) {
+
+            if (entity == client.player || entity.isRemoved()) {
+                continue;
+            }
+
+            if (entity.getPos().squaredDistanceTo(camera)
+                    > maxDistance * maxDistance) {
+                continue;
+            }
+
+            var box = entity.getBoundingBox();
+
+            drawBox(
+                vertex,
+                entry,
+                (float) box.minX,
+                (float) box.minY,
+                (float) box.minZ,
+                (float) box.maxX,
+                (float) box.maxY,
+                (float) box.maxZ,
+                150
+            );
+        }
+
+        // Sound markers for blocks and other sound sources
         for (SoundMarkers.Marker marker : SoundMarkers.snapshot()) {
             float x = (float) marker.x();
             float y = (float) marker.y();
@@ -51,7 +88,8 @@ public final class SoundRenderer {
                 vertex,
                 entry,
                 x - size, y - size, z - size,
-                x + size, y + size, z + size
+                x + size, y + size, z + size,
+                90
             );
         }
 
@@ -62,10 +100,9 @@ public final class SoundRenderer {
         VertexConsumer v,
         MatrixStack.Entry m,
         float x1, float y1, float z1,
-        float x2, float y2, float z2
+        float x2, float y2, float z2,
+        int alpha
     ) {
-        int alpha = 90;
-
         quad(v, m, x1,y1,z2, x2,y1,z2, x2,y2,z2, x1,y2,z2, alpha);
         quad(v, m, x2,y1,z1, x1,y1,z1, x1,y2,z1, x2,y2,z1, alpha);
         quad(v, m, x1,y1,z1, x1,y1,z2, x1,y2,z2, x1,y2,z1, alpha);
