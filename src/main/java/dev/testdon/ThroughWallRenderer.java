@@ -3,6 +3,7 @@ package dev.testdon;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
@@ -26,6 +27,7 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.chunk.WorldChunk;
 
@@ -37,6 +39,7 @@ public final class ThroughWallRenderer {
         new ArrayList<>();
 
     private static long lastChestScan = 0L;
+    private static long lastChunkFinderScan = 0L;
 
     private static RenderLayer createLayer(
             String name,
@@ -152,6 +155,45 @@ public final class ThroughWallRenderer {
         }
     }
 
+    private static void refreshChunkFinder(
+            MinecraftClient client,
+            double maxDistance
+    ) {
+        long now = System.currentTimeMillis();
+
+        if (now - lastChunkFinderScan < 1000L) {
+            return;
+        }
+
+        lastChunkFinderScan = now;
+
+        int centerX = client.player.getChunkPos().x;
+        int centerZ = client.player.getChunkPos().z;
+
+        int radius = (int) Math.ceil(maxDistance / 16.0);
+
+        var chunkManager = client.world.getChunkManager();
+
+        for (int cx = centerX - radius;
+             cx <= centerX + radius; cx++) {
+
+            for (int cz = centerZ - radius;
+                 cz <= centerZ + radius; cz++) {
+
+                if (!chunkManager.isChunkLoaded(cx, cz)) {
+                    continue;
+                }
+
+                WorldChunk chunk =
+                    chunkManager.getWorldChunk(cx, cz);
+
+                if (chunk != null) {
+                    ChunkFinder.scan(chunk);
+                }
+            }
+        }
+    }
+
     private static void render(WorldRenderContext context) {
         MinecraftClient client = MinecraftClient.getInstance();
 
@@ -162,8 +204,10 @@ public final class ThroughWallRenderer {
         boolean showEntities = TestDonSettings.entities;
         boolean showChests = TestDonSettings.chests;
         boolean showSounds = TestDonSettings.sounds;
+        boolean showChunkFinder = TestDonSettings.chunkFinder;
 
-        if (!showEntities && !showChests && !showSounds) {
+        if (!showEntities && !showChests
+                && !showSounds && !showChunkFinder) {
             return;
         }
 
@@ -184,6 +228,12 @@ public final class ThroughWallRenderer {
             refreshChestPositions(client, camera, maxDistance);
         } else {
             CHEST_POSITIONS.clear();
+        }
+
+        if (showChunkFinder) {
+            refreshChunkFinder(client, maxDistance);
+        } else {
+            ChunkFinder.clear();
         }
 
         RenderLayer activeLayer =
@@ -266,6 +316,41 @@ public final class ThroughWallRenderer {
             }
         }
 
+        // Chunk Finder
+        if (showChunkFinder) {
+            Map<Long, Integer> results = ChunkFinder.snapshot();
+
+            double markerY = client.player.getY();
+
+            for (Map.Entry<Long, Integer> result :
+                    results.entrySet()) {
+
+                ChunkPos pos = ChunkPos.fromLong(result.getKey());
+
+                double chunkCenterX = pos.getStartX() + 8.0;
+                double chunkCenterZ = pos.getStartZ() + 8.0;
+
+                double dx = chunkCenterX - camera.x;
+                double dz = chunkCenterZ - camera.z;
+
+                if (dx * dx + dz * dz
+                        > maxDistance * maxDistance) {
+                    continue;
+                }
+
+                drawBox(
+                    vertex, entry,
+                    pos.getStartX(),
+                    (float) markerY,
+                    pos.getStartZ(),
+                    pos.getStartX() + 16,
+                    (float) markerY + 0.08f,
+                    pos.getStartZ() + 16,
+                    55
+                );
+            }
+        }
+
         matrices.pop();
     }
 
@@ -315,4 +400,4 @@ public final class ThroughWallRenderer {
         v.vertex(m, x3, y3, z3).color(255, 0, 0, alpha);
         v.vertex(m, x4, y4, z4).color(255, 0, 0, alpha);
     }
-}
+                }
