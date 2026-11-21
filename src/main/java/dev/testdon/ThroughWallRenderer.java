@@ -38,29 +38,48 @@ public final class ThroughWallRenderer {
 
     private static long lastChestScan = 0L;
 
-    private static final RenderPipeline PIPELINE =
-        RenderPipelinesAccessor.register(
-            RenderPipeline.builder(
-                RenderPipelinesAccessor.getPositionColorSnippet()
-            )
-            .withLocation(
-                Identifier.of("testdon", "pipeline/through_walls")
-            )
-            .withVertexFormat(
-                VertexFormats.POSITION_COLOR,
-                VertexFormat.DrawMode.QUADS
-            )
-            .withBlend(BlendFunction.TRANSLUCENT)
-            .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
-            .withDepthWrite(false)
-            .withCull(false)
-            .build()
+    private static RenderLayer createLayer(
+            String name,
+            String pipelineName,
+            DepthTestFunction depthTest
+    ) {
+        RenderPipeline pipeline =
+            RenderPipelinesAccessor.register(
+                RenderPipeline.builder(
+                    RenderPipelinesAccessor.getPositionColorSnippet()
+                )
+                .withLocation(
+                    Identifier.of("testdon", "pipeline/" + pipelineName)
+                )
+                .withVertexFormat(
+                    VertexFormats.POSITION_COLOR,
+                    VertexFormat.DrawMode.QUADS
+                )
+                .withBlend(BlendFunction.TRANSLUCENT)
+                .withDepthTestFunction(depthTest)
+                .withDepthWrite(false)
+                .withCull(false)
+                .build()
+            );
+
+        return RenderLayerAccessor.testdon$create(
+            name,
+            RenderSetup.builder(pipeline).translucent().build()
+        );
+    }
+
+    private static final RenderLayer THROUGH_WALLS_LAYER =
+        createLayer(
+            "testdon_through_walls",
+            "through_walls",
+            DepthTestFunction.NO_DEPTH_TEST
         );
 
-    private static final RenderLayer LAYER =
-        RenderLayerAccessor.testdon$create(
-            "testdon_through_walls",
-            RenderSetup.builder(PIPELINE).translucent().build()
+    private static final RenderLayer NORMAL_LAYER =
+        createLayer(
+            "testdon_normal",
+            "normal",
+            DepthTestFunction.LEQUAL_DEPTH_TEST
         );
 
     public static void register() {
@@ -70,9 +89,9 @@ public final class ThroughWallRenderer {
     }
 
     private static void refreshChestPositions(
-        MinecraftClient client,
-        Vec3d camera,
-        double maxDistance
+            MinecraftClient client,
+            Vec3d camera,
+            double maxDistance
     ) {
         long now = System.currentTimeMillis();
 
@@ -140,6 +159,14 @@ public final class ThroughWallRenderer {
             return;
         }
 
+        boolean showEntities = TestDonSettings.entities;
+        boolean showChests = TestDonSettings.chests;
+        boolean showSounds = TestDonSettings.sounds;
+
+        if (!showEntities && !showChests && !showSounds) {
+            return;
+        }
+
         MatrixStack matrices = context.matrices();
         VertexConsumerProvider consumers = context.consumers();
 
@@ -153,9 +180,18 @@ public final class ThroughWallRenderer {
         double maxDistance =
             client.options.getViewDistance().getValue() * 16.0;
 
-        refreshChestPositions(client, camera, maxDistance);
+        if (showChests) {
+            refreshChestPositions(client, camera, maxDistance);
+        } else {
+            CHEST_POSITIONS.clear();
+        }
 
-        VertexConsumer vertex = consumers.getBuffer(LAYER);
+        RenderLayer activeLayer =
+            TestDonSettings.throughWalls
+                ? THROUGH_WALLS_LAYER
+                : NORMAL_LAYER;
+
+        VertexConsumer vertex = consumers.getBuffer(activeLayer);
 
         matrices.push();
         matrices.translate(-camera.x, -camera.y, -camera.z);
@@ -163,65 +199,71 @@ public final class ThroughWallRenderer {
         MatrixStack.Entry entry = matrices.peek();
 
         // Entity ESP
-        for (Entity entity : client.world.getEntities()) {
+        if (showEntities) {
+            for (Entity entity : client.world.getEntities()) {
 
-            if (entity == client.player || entity.isRemoved()) {
-                continue;
+                if (entity == client.player || entity.isRemoved()) {
+                    continue;
+                }
+
+                double dx = entity.getX() - camera.x;
+                double dy = entity.getY() - camera.y;
+                double dz = entity.getZ() - camera.z;
+
+                if (dx * dx + dy * dy + dz * dz
+                        > maxDistance * maxDistance) {
+                    continue;
+                }
+
+                var box = entity.getBoundingBox();
+
+                drawBox(
+                    vertex, entry,
+                    (float) box.minX,
+                    (float) box.minY,
+                    (float) box.minZ,
+                    (float) box.maxX,
+                    (float) box.maxY,
+                    (float) box.maxZ,
+                    150
+                );
             }
-
-            double dx = entity.getX() - camera.x;
-            double dy = entity.getY() - camera.y;
-            double dz = entity.getZ() - camera.z;
-
-            if (dx * dx + dy * dy + dz * dz
-                    > maxDistance * maxDistance) {
-                continue;
-            }
-
-            var box = entity.getBoundingBox();
-
-            drawBox(
-                vertex, entry,
-                (float) box.minX,
-                (float) box.minY,
-                (float) box.minZ,
-                (float) box.maxX,
-                (float) box.maxY,
-                (float) box.maxZ,
-                150
-            );
         }
 
-        // Chest ESP - no sound or interaction required
-        for (BlockPos pos : CHEST_POSITIONS) {
+        // Chest ESP
+        if (showChests) {
+            for (BlockPos pos : CHEST_POSITIONS) {
 
-            drawBox(
-                vertex, entry,
-                pos.getX(),
-                pos.getY(),
-                pos.getZ(),
-                pos.getX() + 1,
-                pos.getY() + 1,
-                pos.getZ() + 1,
-                125
-            );
+                drawBox(
+                    vertex, entry,
+                    pos.getX(),
+                    pos.getY(),
+                    pos.getZ(),
+                    pos.getX() + 1,
+                    pos.getY() + 1,
+                    pos.getZ() + 1,
+                    125
+                );
+            }
         }
 
         // Sound markers
-        for (SoundMarkers.Marker marker : SoundMarkers.snapshot()) {
+        if (showSounds) {
+            for (SoundMarkers.Marker marker : SoundMarkers.snapshot()) {
 
-            float x = (float) marker.x();
-            float y = (float) marker.y();
-            float z = (float) marker.z();
+                float x = (float) marker.x();
+                float y = (float) marker.y();
+                float z = (float) marker.z();
 
-            float size = 0.2f;
+                float size = 0.2f;
 
-            drawBox(
-                vertex, entry,
-                x - size, y - size, z - size,
-                x + size, y + size, z + size,
-                90
-            );
+                drawBox(
+                    vertex, entry,
+                    x - size, y - size, z - size,
+                    x + size, y + size, z + size,
+                    90
+                );
+            }
         }
 
         matrices.pop();
