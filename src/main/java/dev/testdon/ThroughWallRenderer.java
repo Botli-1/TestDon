@@ -325,10 +325,12 @@ public final class ThroughWallRenderer {
             for (Map.Entry<Long, Integer> result :
                     results.entrySet()) {
 
+                long key = result.getKey();
+
                 ChunkPos pos = new ChunkPos(
-    (int) (result.getKey() & 0xFFFFFFFFL),
-    (int) (result.getKey() >> 32)
-);
+                    (int) (key & 0xFFFFFFFFL),
+                    (int) (key >> 32)
+                );
 
                 double chunkCenterX = pos.getStartX() + 8.0;
                 double chunkCenterZ = pos.getStartZ() + 8.0;
@@ -403,4 +405,4 @@ public final class ThroughWallRenderer {
         v.vertex(m, x3, y3, z3).color(255, 0, 0, alpha);
         v.vertex(m, x4, y4, z4).color(255, 0, 0, alpha);
     }
-                }
+                    }
