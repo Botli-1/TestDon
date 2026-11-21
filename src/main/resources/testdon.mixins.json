@@ -3,9 +3,10 @@
   "package": "dev.testdon.mixin",
   "compatibilityLevel": "JAVA_21",
   "client": [
-    "SoundManagerMixin",
-    "RenderPipelinesAccessor"
-  ],
+  "SoundManagerMixin",
+  "RenderPipelinesAccessor",
+  "RenderLayerAccessor"
+],
   "injectors": {
     "defaultRequire": 1
   }
