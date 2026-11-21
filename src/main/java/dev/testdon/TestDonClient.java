@@ -1,4 +1,3 @@
-
 package dev.testdon;
 
 import net.fabricmc.api.ClientModInitializer;
@@ -11,6 +10,6 @@ public final class TestDonClient implements ClientModInitializer {
             client -> SoundMarkers.expire()
         );
 
-        ThroughWallRenderer.register();
+        SoundRenderer.register();
     }
 }
