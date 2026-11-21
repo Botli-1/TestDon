@@ -20,4 +20,8 @@ public final class TestDonKeybinds {
                 KeyBinding.Category.MISC
             )
         );
+
+    public static void initialize() {
+        // Forces key registration during mod initialization.
+    }
 }
