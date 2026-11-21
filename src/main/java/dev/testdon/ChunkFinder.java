@@ -14,17 +14,20 @@ public final class ChunkFinder {
     private ChunkFinder() {}
 
     private static final Map<Long, Integer> RESULTS = new HashMap<>();
-
-    private static long lastScan = 0L;
+    private static final Map<Long, Long> LAST_SCAN = new HashMap<>();
 
     public static void scan(WorldChunk chunk) {
         long now = System.currentTimeMillis();
+        ChunkPos pos = chunk.getPos();
+        long key = pos.toLong();
 
-        if (now - lastScan < 5000L) {
+        Long previous = LAST_SCAN.get(key);
+
+        if (previous != null && now - previous < 5000L) {
             return;
         }
 
-        lastScan = now;
+        LAST_SCAN.put(key, now);
 
         int count = 0;
 
@@ -42,12 +45,10 @@ public final class ChunkFinder {
             }
         }
 
-        ChunkPos pos = chunk.getPos();
-
         if (count >= 3) {
-            RESULTS.put(pos.toLong(), count);
+            RESULTS.put(key, count);
         } else {
-            RESULTS.remove(pos.toLong());
+            RESULTS.remove(key);
         }
     }
 
@@ -57,5 +58,6 @@ public final class ChunkFinder {
 
     public static void clear() {
         RESULTS.clear();
+        LAST_SCAN.clear();
     }
 }
