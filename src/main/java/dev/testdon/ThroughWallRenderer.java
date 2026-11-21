@@ -12,6 +12,8 @@ import dev.testdon.mixin.RenderPipelinesAccessor;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
 
+import net.minecraft.block.Blocks;
+import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.render.RenderLayer;
@@ -22,6 +24,7 @@ import net.minecraft.client.render.VertexFormats;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 
 public final class ThroughWallRenderer {
@@ -86,6 +89,7 @@ public final class ThroughWallRenderer {
 
         MatrixStack.Entry entry = matrices.peek();
 
+        // Entity ESP
         for (Entity entity : client.world.getEntities()) {
             if (entity == client.player || entity.isRemoved()) {
                 continue;
@@ -110,6 +114,37 @@ public final class ThroughWallRenderer {
             );
         }
 
+        // Chest ESP - works without sound
+        for (BlockEntity blockEntity : client.world.getBlockEntities()) {
+
+            var state = blockEntity.getCachedState();
+
+            if (!state.isOf(Blocks.CHEST)
+                    && !state.isOf(Blocks.TRAPPED_CHEST)
+                    && !state.isOf(Blocks.ENDER_CHEST)) {
+                continue;
+            }
+
+            BlockPos pos = blockEntity.getPos();
+
+            double cx = pos.getX() + 0.5 - camera.x;
+            double cy = pos.getY() + 0.5 - camera.y;
+            double cz = pos.getZ() + 0.5 - camera.z;
+
+            if (cx * cx + cy * cy + cz * cz
+                    > maxDistance * maxDistance) {
+                continue;
+            }
+
+            drawBox(
+                vertex, entry,
+                pos.getX(), pos.getY(), pos.getZ(),
+                pos.getX() + 1, pos.getY() + 1, pos.getZ() + 1,
+                125
+            );
+        }
+
+        // Sound markers
         for (SoundMarkers.Marker marker : SoundMarkers.snapshot()) {
             float x = (float) marker.x();
             float y = (float) marker.y();
