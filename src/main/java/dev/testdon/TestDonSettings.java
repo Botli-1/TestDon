@@ -8,4 +8,5 @@ public final class TestDonSettings {
     public static boolean chests = true;
     public static boolean sounds = true;
     public static boolean throughWalls = true;
+    public static boolean chunkFinder = false;
 }
