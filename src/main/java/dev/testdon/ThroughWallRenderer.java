@@ -325,7 +325,10 @@ public final class ThroughWallRenderer {
             for (Map.Entry<Long, Integer> result :
                     results.entrySet()) {
 
-                ChunkPos pos = ChunkPos.fromLong(result.getKey());
+                ChunkPos pos = new ChunkPos(
+    (int) (result.getKey() & 0xFFFFFFFFL),
+    (int) (result.getKey() >> 32)
+);
 
                 double chunkCenterX = pos.getStartX() + 8.0;
                 double chunkCenterZ = pos.getStartZ() + 8.0;
