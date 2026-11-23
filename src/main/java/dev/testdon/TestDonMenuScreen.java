@@ -54,10 +54,10 @@ public final class TestDonMenuScreen extends Screen {
         contentW = Math.max(1,
             panelX + panelW - contentX - 20);
 
-        // Smaller module cards
-        cardStartY = panelY + 100;
-        cardH = tiny ? 27 : compact ? 32 : 39;
-        cardGap = tiny ? 5 : 6;
+        // Module cards
+        cardStartY = panelY + 88;
+        cardH = tiny ? 32 : compact ? 38 : 44;
+        cardGap = tiny ? 6 : 7;
 
         actionY = panelY + panelH - 31;
         actionW = Math.max(1, (contentW - 10) / 2);
@@ -152,6 +152,72 @@ public final class TestDonMenuScreen extends Screen {
             && my >= y && my <= y + h;
     }
 
+    // Rounded rectangle
+    private void fillRoundedRect(
+            DrawContext context,
+            int x, int y, int w, int h,
+            int radius, int color) {
+
+        for (int row = 0; row < h; row++) {
+            int dy = 0;
+
+            if (row < radius) {
+                dy = radius - row;
+            } else if (row >= h - radius) {
+                dy = row - (h - radius - 1);
+            }
+
+            int inset = 0;
+
+            if (dy > 0) {
+                inset = (int) Math.ceil(
+                    radius - Math.sqrt(
+                        radius * radius
+                        - (radius - dy) * (radius - dy)
+                    )
+                );
+            }
+
+            context.fill(
+                x + inset,
+                y + row,
+                x + w - inset,
+                y + row + 1,
+                color
+            );
+        }
+    }
+
+    // Rounded top corners
+    private void fillTopRoundedRect(
+            DrawContext context,
+            int x, int y, int w, int h,
+            int radius, int color) {
+
+        for (int row = 0; row < h; row++) {
+            int inset = 0;
+
+            if (row < radius) {
+                int dy = radius - row;
+
+                inset = (int) Math.ceil(
+                    radius - Math.sqrt(
+                        radius * radius
+                        - (radius - dy) * (radius - dy)
+                    )
+                );
+            }
+
+            context.fill(
+                x + inset,
+                y + row,
+                x + w - inset,
+                y + row + 1,
+                color
+            );
+        }
+    }
+
     @Override
     public void render(DrawContext context,
             int mouseX, int mouseY, float delta) {
@@ -161,19 +227,22 @@ public final class TestDonMenuScreen extends Screen {
         // Background
         context.fill(0, 0, width, height, 0x99000000);
 
-        // Main panel
-        context.fill(panelX - 2, panelY - 2,
-            panelX + panelW + 2, panelY + panelH + 2,
-            0xFF263B55);
+        // Rounded main panel
+        fillRoundedRect(context,
+            panelX - 2, panelY - 2,
+            panelW + 4, panelH + 4,
+            14, 0xFF263B55);
 
-        context.fill(panelX, panelY,
-            panelX + panelW, panelY + panelH,
-            0xFF080E19);
+        fillRoundedRect(context,
+            panelX, panelY,
+            panelW, panelH,
+            12, 0xFF080E19);
 
         // Header
-        context.fill(panelX, panelY,
-            panelX + panelW, panelY + 43,
-            0xFF0D1728);
+        fillTopRoundedRect(context,
+            panelX, panelY,
+            panelW, 43,
+            11, 0xFF0D1728);
 
         context.fill(panelX, panelY + 42,
             panelX + panelW, panelY + 43,
@@ -249,7 +318,7 @@ public final class TestDonMenuScreen extends Screen {
             contentX, panelY + 73,
             0xFF8295AE, false);
 
-        // Module cards with scrolling
+        // Module cards
         String[] modules = getModules();
 
         context.enableScissor(
@@ -474,4 +543,4 @@ public final class TestDonMenuScreen extends Screen {
 
         return super.keyPressed(input);
     }
-                             }
+                         }
