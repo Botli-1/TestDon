@@ -151,11 +151,14 @@ public final class TestDonMenuScreen extends Screen {
             && my >= y && my <= y + h;
     }
 
-    // Rounded rectangle
+    // Correct rounded rectangle: outward rounded corners
     private void fillRoundedRect(
             DrawContext context,
             int x, int y, int w, int h,
             int radius, int color) {
+
+        radius = Math.max(0,
+            Math.min(radius, Math.min(w / 2, h / 2)));
 
         for (int row = 0; row < h; row++) {
             int dy = 0;
@@ -171,8 +174,7 @@ public final class TestDonMenuScreen extends Screen {
             if (dy > 0) {
                 inset = (int) Math.ceil(
                     radius - Math.sqrt(
-                        radius * radius
-                        - (radius - dy) * (radius - dy)
+                        radius * radius - dy * dy
                     )
                 );
             }
@@ -187,11 +189,14 @@ public final class TestDonMenuScreen extends Screen {
         }
     }
 
-    // Rounded top corners
+    // Correct rounded top corners
     private void fillTopRoundedRect(
             DrawContext context,
             int x, int y, int w, int h,
             int radius, int color) {
+
+        radius = Math.max(0,
+            Math.min(radius, Math.min(w / 2, h)));
 
         for (int row = 0; row < h; row++) {
             int inset = 0;
@@ -201,8 +206,7 @@ public final class TestDonMenuScreen extends Screen {
 
                 inset = (int) Math.ceil(
                     radius - Math.sqrt(
-                        radius * radius
-                        - (radius - dy) * (radius - dy)
+                        radius * radius - dy * dy
                     )
                 );
             }
@@ -226,18 +230,19 @@ public final class TestDonMenuScreen extends Screen {
         // Background
         context.fill(0, 0, width, height, 0x99000000);
 
-        // Rounded main panel
+        // Rounded outer frame
         fillRoundedRect(context,
             panelX - 2, panelY - 2,
             panelW + 4, panelH + 4,
             16, 0xFF263B55);
 
+        // Rounded main panel
         fillRoundedRect(context,
             panelX, panelY,
             panelW, panelH,
             14, 0xFF080E19);
 
-        // Header
+        // Rounded header
         fillTopRoundedRect(context,
             panelX, panelY,
             panelW, 43,
@@ -542,5 +547,5 @@ public final class TestDonMenuScreen extends Screen {
 
         return super.keyPressed(input);
     }
-    }
+                }
                 
