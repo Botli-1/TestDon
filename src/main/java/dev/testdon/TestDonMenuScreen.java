@@ -14,64 +14,56 @@ public final class TestDonMenuScreen extends Screen {
     private String selectedCategory = "VISUALS";
 
     private static final String[] CATEGORIES = {
-        "COMBAT",
-        "MOVEMENT",
-        "PLAYER",
-        "WORLD",
-        "RENDER",
-        "VISUALS",
-        "CLIENT",
-        "MISC",
-        "FAVORITES"
+        "COMBAT", "MOVEMENT", "PLAYER",
+        "WORLD", "RENDER", "VISUALS",
+        "CLIENT", "MISC", "FAVORITES"
     };
 
-    private int panelX;
-    private int panelY;
-    private int panelW;
-    private int panelH;
-
-    private int sidebarW;
-    private int contentX;
-    private int contentW;
-
-    private boolean compact;
-    private boolean tiny;
+    private int panelX, panelY, panelW, panelH;
+    private int sidebarW, contentX, contentW;
+    private int cardStartY, cardH, cardGap;
+    private int actionY, actionW;
+    private boolean compact, tiny;
 
     public TestDonMenuScreen() {
         super(Text.literal("Test Don"));
     }
 
     private void calculateLayout() {
-        panelW = Math.max(1, width - 16);
-        panelH = Math.max(1, height - 16);
+        panelW = Math.min(width - 16,
+            Math.max(300, (int)(width * (width < 850 ? 0.92 : 0.68))));
+
+        panelH = Math.min(height - 16,
+            Math.max(230, (int)(height * (height < 550 ? 0.86 : 0.72))));
 
         panelX = (width - panelW) / 2;
         panelY = (height - panelH) / 2;
 
-        compact = panelW < 620 || panelH < 420;
+        compact = panelW < 620 || panelH < 390;
         tiny = panelW < 390 || panelH < 300;
 
-        sidebarW = tiny ? 76 : 100;
+        sidebarW = tiny ? 82 : compact ? 105 : 150;
 
-        contentX = panelX + sidebarW + 17;
-        contentW = Math.max(1,
-            panelX + panelW - contentX - (compact ? 9 : 120)
-        );
+        contentX = panelX + sidebarW + 18;
+        contentW = Math.max(1, panelX + panelW - contentX - 16);
+
+        cardStartY = panelY + (compact ? 78 : 94);
+        cardH = compact ? (tiny ? 32 : 40) : 50;
+        cardGap = compact ? 5 : 8;
+
+        actionY = panelY + panelH - 31;
+        actionW = Math.max(1, (contentW - 10) / 2);
     }
 
     private String[] getModules() {
         return switch (selectedCategory) {
             case "VISUALS" -> new String[] {
-                "Entity ESP",
-                "Chest ESP",
-                "Sound ESP",
-                "Through Walls"
+                "Entity ESP", "Chest ESP",
+                "Sound ESP", "Through Walls"
             };
-
             case "WORLD" -> new String[] {
                 "Chunk Finder"
             };
-
             default -> new String[] {};
         };
     }
@@ -91,16 +83,12 @@ public final class TestDonMenuScreen extends Screen {
         switch (module) {
             case "Entity ESP" ->
                 TestDonSettings.entities = !TestDonSettings.entities;
-
             case "Chest ESP" ->
                 TestDonSettings.chests = !TestDonSettings.chests;
-
             case "Sound ESP" ->
                 TestDonSettings.sounds = !TestDonSettings.sounds;
-
             case "Through Walls" ->
                 TestDonSettings.throughWalls = !TestDonSettings.throughWalls;
-
             case "Chunk Finder" ->
                 TestDonSettings.chunkFinder = !TestDonSettings.chunkFinder;
         }
@@ -114,124 +102,90 @@ public final class TestDonMenuScreen extends Screen {
         TestDonSettings.chunkFinder = value;
     }
 
-    private int getEnabledCount() {
+    private int enabledCount() {
         int count = 0;
-
         if (TestDonSettings.entities) count++;
         if (TestDonSettings.chests) count++;
         if (TestDonSettings.sounds) count++;
         if (TestDonSettings.throughWalls) count++;
         if (TestDonSettings.chunkFinder) count++;
-
         return count;
     }
 
-    private boolean inside(
-            double mx, double my,
-            int x, int y, int w, int h
-    ) {
+    private boolean inside(double mx, double my,
+            int x, int y, int w, int h) {
         return mx >= x && mx <= x + w
             && my >= y && my <= y + h;
     }
 
     @Override
-    public void render(
-            DrawContext context,
-            int mouseX,
-            int mouseY,
-            float delta
-    ) {
+    public void render(DrawContext context,
+            int mouseX, int mouseY, float delta) {
+
         calculateLayout();
 
-        context.fill(
-            0, 0, width, height,
-            0x99000000
-        );
+        // Background
+        context.fill(0, 0, width, height, 0x99000000);
 
-        // Main window
-        context.fill(
-            panelX, panelY,
+        // Main panel
+        context.fill(panelX - 2, panelY - 2,
+            panelX + panelW + 2, panelY + panelH + 2,
+            0xFF263B55);
+
+        context.fill(panelX, panelY,
             panelX + panelW, panelY + panelH,
-            0xFF080E19
-        );
+            0xFF080E19);
 
         // Header
-        context.fill(
-            panelX, panelY,
-            panelX + panelW, panelY + 40,
-            0xFF0D1524
-        );
+        context.fill(panelX, panelY,
+            panelX + panelW, panelY + 43,
+            0xFF0D1728);
 
-        context.drawText(
-            textRenderer,
-            "TEST DON",
-            panelX + 12,
-            panelY + 10,
-            0xFF55B9FF,
-            false
-        );
+        context.fill(panelX, panelY + 42,
+            panelX + panelW, panelY + 43,
+            0xFF1B3550);
+
+        context.drawText(textRenderer, "TEST DON",
+            panelX + 17, panelY + 14, 0xFF42B9FF, false);
 
         if (!tiny) {
-            context.drawText(
-                textRenderer,
-                "CLIENT MOD",
-                panelX + 105,
-                panelY + 14,
-                0xFF8998AE,
-                false
-            );
+            context.drawText(textRenderer, "CLIENT MOD",
+                panelX + 130, panelY + 15, 0xFF899CB5, false);
         }
 
         // Sidebar
-        int sideX = panelX + 5;
-        int sideY = panelY + 49;
-        int sideButtonW = sidebarW - 9;
+        int sideX = panelX + 8;
+        int sideY = panelY + 55;
+        int sideButtonW = sidebarW - 13;
+        int categoryGap = panelH < 360 ? 22 : 27;
 
-        context.drawText(
-            textRenderer,
-            "CATEGORIES",
-            sideX + 4,
-            sideY,
-            0xFF71839B,
-            false
-        );
-
-        int categoryGap = tiny ? 23 : 26;
+        context.drawText(textRenderer, "CATEGORIES",
+            sideX + 5, sideY, 0xFF8295AE, false);
 
         for (int i = 0; i < CATEGORIES.length; i++) {
             String category = CATEGORIES[i];
+            int cy = sideY + 22 + i * categoryGap;
 
-            int cy = sideY + 19 + i * categoryGap;
+            if (cy + 22 > panelY + panelH - 8) break;
 
-            if (cy + 21 > panelY + panelH - 5) {
-                break;
-            }
-
-            boolean selected =
-                category.equals(selectedCategory);
-
-            boolean hovered = inside(
-                mouseX, mouseY,
-                sideX, cy,
-                sideButtonW, 21
-            );
+            boolean selected = category.equals(selectedCategory);
+            boolean hovered = inside(mouseX, mouseY,
+                sideX, cy, sideButtonW, 22);
 
             if (selected) {
-                context.fill(
-                    sideX, cy,
-                    sideX + sideButtonW, cy + 21,
-                    0xFF17345C
-                );
+                context.fill(sideX, cy,
+                    sideX + sideButtonW, cy + 22,
+                    0xFF193B63);
+                context.fill(sideX, cy,
+                    sideX + 3, cy + 22,
+                    0xFF35B5FF);
             } else if (hovered) {
-                context.fill(
-                    sideX, cy,
-                    sideX + sideButtonW, cy + 21,
-                    0xFF172334
-                );
+                context.fill(sideX, cy,
+                    sideX + sideButtonW, cy + 22,
+                    0xFF17283C);
             }
 
             String label = category;
-
             if (tiny) {
                 label = switch (category) {
                     case "MOVEMENT" -> "MOVE";
@@ -240,241 +194,111 @@ public final class TestDonMenuScreen extends Screen {
                 };
             }
 
-            context.drawText(
-                textRenderer,
-                label,
-                sideX + 5,
-                cy + 6,
-                selected ? 0xFF65BDFF : 0xFF9AA9BD,
-                false
-            );
+            context.drawText(textRenderer, label,
+                sideX + 7, cy + 7,
+                selected ? 0xFF62C4FF : 0xFF9AAAC0,
+                false);
         }
 
-        // Main content
-        context.drawText(
-            textRenderer,
-            selectedCategory,
-            contentX,
-            panelY + 49,
-            0xFFFFFFFF,
-            false
-        );
+        // Content headings
+        context.drawText(textRenderer, selectedCategory,
+            contentX, panelY + 55, 0xFFFFFFFF, false);
 
-        context.drawText(
-            textRenderer,
-            "MODULES",
-            contentX,
-            panelY + 65,
-            0xFF71839B,
-            false
-        );
+        context.drawText(textRenderer, "MODULES",
+            contentX, panelY + 73, 0xFF8295AE, false);
 
+        // Module cards
         String[] modules = getModules();
-
-        int columns = compact ? 1 : 2;
-        int cardGap = tiny ? 4 : 8;
-        int cardH = compact ? (tiny ? 35 : 42) : 58;
-        int rowGap = compact ? 5 : 9;
-
-        int cardW = Math.max(
-            1,
-            (contentW - cardGap * (columns - 1)) / columns
-        );
-
-        int startY = panelY + 84;
 
         for (int i = 0; i < modules.length; i++) {
             String module = modules[i];
+            int cardY = cardStartY + i * (cardH + cardGap);
 
-            int column = i % columns;
-            int row = i / columns;
-
-            int cardX =
-                contentX + column * (cardW + cardGap);
-
-            int cardY =
-                startY + row * (cardH + rowGap);
+            if (cardY + cardH > actionY - 8) break;
 
             boolean enabled = isEnabled(module);
+            boolean hovered = inside(mouseX, mouseY,
+                contentX, cardY, contentW, cardH);
 
-            boolean hovered = inside(
-                mouseX, mouseY,
-                cardX, cardY,
-                cardW, cardH
-            );
+            context.fill(contentX, cardY,
+                contentX + contentW, cardY + cardH,
+                hovered ? 0xFF1C3047 : 0xFF111E2E);
 
-            // Card
-            context.fill(
-                cardX, cardY,
-                cardX + cardW, cardY + cardH,
-                hovered ? 0xFF1B2B40 : 0xFF111C2B
-            );
+            context.fill(contentX, cardY,
+                contentX + 3, cardY + cardH,
+                enabled ? 0xFF35B5FF : 0xFF34465D);
 
-            // Blue line
-            context.fill(
-                cardX, cardY,
-                cardX + 2, cardY + cardH,
-                enabled ? 0xFF38A9FF : 0xFF344155
-            );
+            context.drawText(textRenderer, module,
+                contentX + 12, cardY + (compact ? 11 : 10),
+                0xFFEAF2FC, false);
 
-            context.drawText(
-                textRenderer,
-                module,
-                cardX + 8,
-                cardY + (compact ? 5 : 10),
-                0xFFE7EDF7,
-                false
-            );
-
-            if (!tiny) {
+            if (!compact) {
                 String description = switch (module) {
                     case "Entity ESP" -> "Highlights entities";
                     case "Chest ESP" -> "Highlights loaded chests";
                     case "Sound ESP" -> "Shows sound locations";
                     case "Through Walls" -> "See markers through blocks";
                     case "Chunk Finder" -> "Finds storage concentrations";
-                    default -> "Test Don module";
+                    default -> "";
                 };
 
-                context.drawText(
-                    textRenderer,
-                    description,
-                    cardX + 8,
-                    cardY + (compact ? 22 : 32),
-                    0xFF8293A9,
-                    false
-                );
+                context.drawText(textRenderer, description,
+                    contentX + 12, cardY + 30,
+                    0xFF8194AD, false);
             }
 
-            // Toggle
-            int toggleX = cardX + cardW - 36;
-            int toggleY = cardY + (cardH - 17) / 2;
+            // Toggle switch
+            int tx = contentX + contentW - 42;
+            int ty = cardY + (cardH - 18) / 2;
 
-            context.fill(
-                toggleX, toggleY,
-                toggleX + 30, toggleY + 17,
-                enabled ? 0xFF1679BD : 0xFF354154
-            );
+            context.fill(tx, ty, tx + 32, ty + 18,
+                enabled ? 0xFF168BD0 : 0xFF35465C);
 
-            int knobX =
-                enabled ? toggleX + 17 : toggleX + 3;
+            int knobX = enabled ? tx + 18 : tx + 3;
 
-            context.fill(
-                knobX, toggleY + 3,
-                knobX + 10, toggleY + 14,
-                0xFFFFFFFF
-            );
+            context.fill(knobX, ty + 3,
+                knobX + 11, ty + 15,
+                0xFFFFFFFF);
         }
 
         // Quick actions
-        if (compact) {
-            int actionY = panelY + panelH - 28;
-            int actionGap = 6;
-            int actionW = Math.max(
-                1, (contentW - actionGap) / 2
-            );
+        drawAction(context, mouseX, mouseY,
+            contentX, actionY, actionW, "ENABLE ALL");
 
-            drawAction(
-                context, mouseX, mouseY,
-                contentX, actionY,
-                actionW, "ENABLE ALL"
-            );
+        drawAction(context, mouseX, mouseY,
+            contentX + actionW + 10, actionY,
+            actionW, "DISABLE ALL");
 
-            drawAction(
-                context, mouseX, mouseY,
-                contentX + actionW + actionGap,
-                actionY,
-                actionW, "DISABLE ALL"
-            );
-        } else {
-            int rightX = panelX + panelW - 112;
-
-            context.drawText(
-                textRenderer,
-                "QUICK ACTIONS",
-                rightX,
-                panelY + 49,
-                0xFF71839B,
-                false
-            );
-
-            drawAction(
-                context, mouseX, mouseY,
-                rightX, panelY + 72,
-                100, "ENABLE ALL"
-            );
-
-            drawAction(
-                context, mouseX, mouseY,
-                rightX, panelY + 99,
-                100, "DISABLE ALL"
-            );
-
-            context.drawText(
-                textRenderer,
-                "CLIENT STATS",
-                rightX,
-                panelY + 145,
-                0xFF71839B,
-                false
-            );
-
-            context.drawText(
-                textRenderer,
-                "MODULES: 5",
-                rightX,
-                panelY + 164,
-                0xFF9AA9BD,
-                false
-            );
-
-            context.drawText(
-                textRenderer,
-                "ENABLED: " + getEnabledCount(),
-                rightX,
-                panelY + 181,
-                0xFF55B9FF,
-                false
-            );
+        if (!compact) {
+            context.drawText(textRenderer,
+                "ENABLED: " + enabledCount(),
+                panelX + panelW - 115,
+                panelY + 15,
+                0xFF55B9FF, false);
         }
 
         super.render(context, mouseX, mouseY, delta);
     }
 
-    private void drawAction(
-            DrawContext context,
-            int mouseX,
-            int mouseY,
-            int x,
-            int y,
-            int w,
-            String label
-    ) {
-        boolean hovered = inside(
-            mouseX, mouseY,
-            x, y, w, 22
-        );
+    private void drawAction(DrawContext context,
+            int mouseX, int mouseY,
+            int x, int y, int w, String label) {
 
-        context.fill(
-            x, y,
-            x + w, y + 22,
-            hovered ? 0xFF24466A : 0xFF17263A
-        );
+        boolean hovered = inside(mouseX, mouseY, x, y, w, 23);
+
+        context.fill(x, y, x + w, y + 23,
+            hovered ? 0xFF244D75 : 0xFF172B43);
+
+        context.fill(x, y, x + w, y + 1, 0xFF28527A);
 
         context.drawCenteredTextWithShadow(
-            textRenderer,
-            label,
-            x + w / 2,
-            y + 7,
-            0xFFDCEBFA
+            textRenderer, label,
+            x + w / 2, y + 8, 0xFFE8F3FF
         );
     }
 
     @Override
-    public boolean mouseClicked(
-            Click click,
-            boolean doubled
-    ) {
+    public boolean mouseClicked(Click click, boolean doubled) {
         if (click.button() != 0) {
             return super.mouseClicked(click, doubled);
         }
@@ -484,110 +308,49 @@ public final class TestDonMenuScreen extends Screen {
         double mx = click.x();
         double my = click.y();
 
-        // Category buttons
-        int sideX = panelX + 5;
-        int sideY = panelY + 49;
-        int sideButtonW = sidebarW - 9;
-        int categoryGap = tiny ? 23 : 26;
+        // Category selection
+        int sideX = panelX + 8;
+        int sideY = panelY + 55;
+        int sideButtonW = sidebarW - 13;
+        int categoryGap = panelH < 360 ? 22 : 27;
 
         for (int i = 0; i < CATEGORIES.length; i++) {
-            int cy = sideY + 19 + i * categoryGap;
+            int cy = sideY + 22 + i * categoryGap;
 
-            if (cy + 21 > panelY + panelH - 5) {
-                break;
-            }
+            if (cy + 22 > panelY + panelH - 8) break;
 
-            if (inside(
-                    mx, my,
-                    sideX, cy,
-                    sideButtonW, 21
-            )) {
+            if (inside(mx, my, sideX, cy, sideButtonW, 22)) {
                 selectedCategory = CATEGORIES[i];
                 return true;
             }
         }
 
-        // Module buttons
+        // Module selection
         String[] modules = getModules();
 
-        int columns = compact ? 1 : 2;
-        int cardGap = tiny ? 4 : 8;
-        int cardH = compact ? (tiny ? 35 : 42) : 58;
-        int rowGap = compact ? 5 : 9;
-
-        int cardW = Math.max(
-            1,
-            (contentW - cardGap * (columns - 1)) / columns
-        );
-
-        int startY = panelY + 84;
-
         for (int i = 0; i < modules.length; i++) {
-            int column = i % columns;
-            int row = i / columns;
+            int cardY = cardStartY + i * (cardH + cardGap);
 
-            int cardX =
-                contentX + column * (cardW + cardGap);
+            if (cardY + cardH > actionY - 8) break;
 
-            int cardY =
-                startY + row * (cardH + rowGap);
-
-            if (inside(
-                    mx, my,
-                    cardX, cardY,
-                    cardW, cardH
-            )) {
+            if (inside(mx, my, contentX, cardY, contentW, cardH)) {
                 toggleModule(modules[i]);
                 return true;
             }
         }
 
-        // Quick actions
-        if (compact) {
-            int actionY = panelY + panelH - 28;
-            int actionGap = 6;
-            int actionW = Math.max(
-                1, (contentW - actionGap) / 2
-            );
+        // Enable all
+        if (inside(mx, my, contentX, actionY, actionW, 23)) {
+            setAll(true);
+            return true;
+        }
 
-            if (inside(
-                    mx, my,
-                    contentX, actionY,
-                    actionW, 22
-            )) {
-                setAll(true);
-                return true;
-            }
-
-            if (inside(
-                    mx, my,
-                    contentX + actionW + actionGap,
-                    actionY,
-                    actionW, 22
-            )) {
-                setAll(false);
-                return true;
-            }
-        } else {
-            int rightX = panelX + panelW - 112;
-
-            if (inside(
-                    mx, my,
-                    rightX, panelY + 72,
-                    100, 22
-            )) {
-                setAll(true);
-                return true;
-            }
-
-            if (inside(
-                    mx, my,
-                    rightX, panelY + 99,
-                    100, 22
-            )) {
-                setAll(false);
-                return true;
-            }
+        // Disable all
+        if (inside(mx, my,
+                contentX + actionW + 10,
+                actionY, actionW, 23)) {
+            setAll(false);
+            return true;
         }
 
         return super.mouseClicked(click, doubled);
@@ -602,4 +365,5 @@ public final class TestDonMenuScreen extends Screen {
 
         return super.keyPressed(input);
     }
-                }
+                             }
+            
