@@ -54,7 +54,9 @@ public final class TestDonMenuScreen extends Screen {
         contentW = Math.max(1,
             panelX + panelW - contentX - 20);
 
-        cardStartY = panelY + 88;
+        // Move module cards up into the removed heading area
+        cardStartY = panelY + 55;
+
         cardH = tiny ? 32 : compact ? 38 : 44;
         cardGap = tiny ? 6 : 7;
 
@@ -151,14 +153,10 @@ public final class TestDonMenuScreen extends Screen {
             && my >= y && my <= y + h;
     }
 
-    // Correct rounded rectangle: outward rounded corners
     private void fillRoundedRect(
             DrawContext context,
             int x, int y, int w, int h,
             int radius, int color) {
-
-        radius = Math.max(0,
-            Math.min(radius, Math.min(w / 2, h / 2)));
 
         for (int row = 0; row < h; row++) {
             int dy = 0;
@@ -174,7 +172,8 @@ public final class TestDonMenuScreen extends Screen {
             if (dy > 0) {
                 inset = (int) Math.ceil(
                     radius - Math.sqrt(
-                        radius * radius - dy * dy
+                        radius * radius
+                        - (radius - dy) * (radius - dy)
                     )
                 );
             }
@@ -189,14 +188,10 @@ public final class TestDonMenuScreen extends Screen {
         }
     }
 
-    // Correct rounded top corners
     private void fillTopRoundedRect(
             DrawContext context,
             int x, int y, int w, int h,
             int radius, int color) {
-
-        radius = Math.max(0,
-            Math.min(radius, Math.min(w / 2, h)));
 
         for (int row = 0; row < h; row++) {
             int inset = 0;
@@ -206,7 +201,8 @@ public final class TestDonMenuScreen extends Screen {
 
                 inset = (int) Math.ceil(
                     radius - Math.sqrt(
-                        radius * radius - dy * dy
+                        radius * radius
+                        - (radius - dy) * (radius - dy)
                     )
                 );
             }
@@ -227,22 +223,19 @@ public final class TestDonMenuScreen extends Screen {
 
         calculateLayout();
 
-        // Background
         context.fill(0, 0, width, height, 0x99000000);
 
-        // Rounded outer frame
         fillRoundedRect(context,
             panelX - 2, panelY - 2,
             panelW + 4, panelH + 4,
             16, 0xFF263B55);
 
-        // Rounded main panel
         fillRoundedRect(context,
             panelX, panelY,
             panelW, panelH,
             14, 0xFF080E19);
 
-        // Rounded header
+        // Header
         fillTopRoundedRect(context,
             panelX, panelY,
             panelW, 43,
@@ -313,16 +306,7 @@ public final class TestDonMenuScreen extends Screen {
                 false);
         }
 
-        // Content headings
-        context.drawText(textRenderer, selectedCategory,
-            contentX, panelY + 55,
-            0xFFFFFFFF, false);
-
-        context.drawText(textRenderer, "MODULES",
-            contentX, panelY + 73,
-            0xFF8295AE, false);
-
-        // Module cards
+        // Module cards: headings removed
         String[] modules = getModules();
 
         context.enableScissor(
@@ -362,7 +346,6 @@ public final class TestDonMenuScreen extends Screen {
                 cardY + (cardH - 8) / 2,
                 0xFFEAF2FC, false);
 
-            // Toggle switch
             int tx = contentX + contentW - 38;
             int ty = cardY + (cardH - 16) / 2;
 
@@ -487,13 +470,11 @@ public final class TestDonMenuScreen extends Screen {
             }
         }
 
-        // Enable all
         if (inside(mx, my, contentX, actionY, actionW, 23)) {
             setAll(true);
             return true;
         }
 
-        // Disable all
         if (inside(mx, my,
                 contentX + actionW + 10,
                 actionY, actionW, 23)) {
@@ -504,7 +485,6 @@ public final class TestDonMenuScreen extends Screen {
         return super.mouseClicked(click, doubled);
     }
 
-    // Mouse wheel scrolling
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY,
             double horizontalAmount, double verticalAmount) {
@@ -548,4 +528,4 @@ public final class TestDonMenuScreen extends Screen {
         return super.keyPressed(input);
     }
                 }
-                
+                    
