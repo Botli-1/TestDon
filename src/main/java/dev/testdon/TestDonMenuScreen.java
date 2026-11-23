@@ -29,31 +29,34 @@ public final class TestDonMenuScreen extends Screen {
         super(Text.literal("Test Don"));
     }
 
-    private void calculateLayout() {
-        panelW = Math.min(width - 16,
-            Math.max(300, (int)(width * (width < 850 ? 0.92 : 0.68))));
+    
+private void calculateLayout() {
+    panelW = Math.min(width - 24,
+        Math.max(280, (int)(width * 0.54)));
 
-        panelH = Math.min(height - 16,
-            Math.max(230, (int)(height * (height < 550 ? 0.86 : 0.72))));
+    panelH = Math.min(height - 24,
+        Math.max(220, (int)(height * 0.70)));
 
-        panelX = (width - panelW) / 2;
-        panelY = (height - panelH) / 2;
+    panelX = (width - panelW) / 2;
+    panelY = (height - panelH) / 2;
 
-        compact = panelW < 620 || panelH < 390;
-        tiny = panelW < 390 || panelH < 300;
+    compact = panelW < 620 || panelH < 390;
+    tiny = panelW < 390 || panelH < 300;
 
-        sidebarW = tiny ? 82 : compact ? 105 : 150;
+    sidebarW = tiny ? 82 : compact ? 105 : 150;
 
-        contentX = panelX + sidebarW + 18;
-        contentW = Math.max(1, panelX + panelW - contentX - 16);
+    contentX = panelX + sidebarW + 18;
+    contentW = Math.max(1, panelX + panelW - contentX - 16);
 
-        cardStartY = panelY + (compact ? 78 : 94);
-        cardH = compact ? (tiny ? 32 : 40) : 50;
-        cardGap = compact ? 5 : 8;
+    // More space between headings and module cards
+    cardStartY = panelY + 112;
+    cardH = compact ? (tiny ? 32 : 40) : 50;
+    cardGap = compact ? 7 : 9;
 
-        actionY = panelY + panelH - 31;
-        actionW = Math.max(1, (contentW - 10) / 2);
-    }
+    actionY = panelY + panelH - 31;
+    actionW = Math.max(1, (contentW - 10) / 2);
+}
+
 
     private String[] getModules() {
         return switch (selectedCategory) {
