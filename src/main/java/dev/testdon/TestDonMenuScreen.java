@@ -32,7 +32,7 @@ public final class TestDonMenuScreen extends Screen {
     
 private void calculateLayout() {
     panelW = Math.min(width - 24,
-        Math.max(280, (int)(width * 0.54)));
+        Math.max(280, (int)(width * 0.62)));
 
     panelH = Math.min(height - 24,
         Math.max(220, (int)(height * 0.70)));
