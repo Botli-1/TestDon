@@ -153,69 +153,69 @@ public final class TestDonMenuScreen extends Screen {
             && my >= y && my <= y + h;
     }
 
-    private void fillRoundedRect(
-            DrawContext context,
-            int x, int y, int w, int h,
-            int radius, int color) {
+    
+private void fillRoundedRect(
+        DrawContext context,
+        int x, int y, int w, int h,
+        int radius, int color) {
 
-        for (int row = 0; row < h; row++) {
-            int dy = 0;
+    for (int row = 0; row < h; row++) {
+        int dy = 0;
 
-            if (row < radius) {
-                dy = radius - row;
-            } else if (row >= h - radius) {
-                dy = row - (h - radius - 1);
-            }
+        if (row < radius) {
+            dy = radius - row;
+        } else if (row >= h - radius) {
+            dy = radius - (h - 1 - row);
+        }
 
-            int inset = 0;
+        int inset = 0;
 
-            if (dy > 0) {
-                inset = (int) Math.ceil(
-                    radius - Math.sqrt(
-                        radius * radius
-                        - (radius - dy) * (radius - dy)
-                    )
-                );
-            }
-
-            context.fill(
-                x + inset,
-                y + row,
-                x + w - inset,
-                y + row + 1,
-                color
+        if (dy > 0) {
+            inset = (int) Math.ceil(
+                radius - Math.sqrt(
+                    radius * radius - dy * dy
+                )
             );
         }
+
+        context.fill(
+            x + inset,
+            y + row,
+            x + w - inset,
+            y + row + 1,
+            color
+        );
     }
+}
 
-    private void fillTopRoundedRect(
-            DrawContext context,
-            int x, int y, int w, int h,
-            int radius, int color) {
+private void fillTopRoundedRect(
+        DrawContext context,
+        int x, int y, int w, int h,
+        int radius, int color) {
 
-        for (int row = 0; row < h; row++) {
-            int inset = 0;
+    for (int row = 0; row < h; row++) {
+        int dy = row < radius ? radius - row : 0;
 
-            if (row < radius) {
-                int dy = radius - row;
+        int inset = 0;
 
-                inset = (int) Math.ceil(
-                    radius - Math.sqrt(
-                        radius * radius
-                        - (radius - dy) * (radius - dy)
-                    )
-                );
-            }
-
-            context.fill(
-                x + inset,
-                y + row,
-                x + w - inset,
-                y + row + 1,
-                color
+        if (dy > 0) {
+            inset = (int) Math.ceil(
+                radius - Math.sqrt(
+                    radius * radius - dy * dy
+                )
             );
         }
+
+        context.fill(
+            x + inset,
+            y + row,
+            x + w - inset,
+            y + row + 1,
+            color
+        );
     }
+}
+
 
     @Override
     public void render(DrawContext context,
