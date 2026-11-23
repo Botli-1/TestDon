@@ -54,7 +54,6 @@ public final class TestDonMenuScreen extends Screen {
         contentW = Math.max(1,
             panelX + panelW - contentX - 20);
 
-        // Module cards
         cardStartY = panelY + 88;
         cardH = tiny ? 32 : compact ? 38 : 44;
         cardGap = tiny ? 6 : 7;
@@ -231,18 +230,18 @@ public final class TestDonMenuScreen extends Screen {
         fillRoundedRect(context,
             panelX - 2, panelY - 2,
             panelW + 4, panelH + 4,
-            14, 0xFF263B55);
+            16, 0xFF263B55);
 
         fillRoundedRect(context,
             panelX, panelY,
             panelW, panelH,
-            12, 0xFF080E19);
+            14, 0xFF080E19);
 
         // Header
         fillTopRoundedRect(context,
             panelX, panelY,
             panelW, 43,
-            11, 0xFF0D1728);
+            13, 0xFF0D1728);
 
         context.fill(panelX, panelY + 42,
             panelX + panelW, panelY + 43,
@@ -543,4 +542,5 @@ public final class TestDonMenuScreen extends Screen {
 
         return super.keyPressed(input);
     }
-                         }
+    }
+                
