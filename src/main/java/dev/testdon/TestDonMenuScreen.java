@@ -30,10 +30,33 @@ public final class TestDonMenuScreen extends Screen {
     private int panelW;
     private int panelH;
 
+    private int sidebarW;
+    private int contentX;
+    private int contentW;
+
     private boolean compact;
+    private boolean tiny;
 
     public TestDonMenuScreen() {
         super(Text.literal("Test Don"));
+    }
+
+    private void calculateLayout() {
+        panelW = Math.max(1, width - 16);
+        panelH = Math.max(1, height - 16);
+
+        panelX = (width - panelW) / 2;
+        panelY = (height - panelH) / 2;
+
+        compact = panelW < 620 || panelH < 420;
+        tiny = panelW < 390 || panelH < 300;
+
+        sidebarW = tiny ? 76 : 100;
+
+        contentX = panelX + sidebarW + 17;
+        contentW = Math.max(1,
+            panelX + panelW - contentX - (compact ? 9 : 120)
+        );
     }
 
     private String[] getModules() {
@@ -91,38 +114,24 @@ public final class TestDonMenuScreen extends Screen {
         TestDonSettings.chunkFinder = value;
     }
 
+    private int getEnabledCount() {
+        int count = 0;
+
+        if (TestDonSettings.entities) count++;
+        if (TestDonSettings.chests) count++;
+        if (TestDonSettings.sounds) count++;
+        if (TestDonSettings.throughWalls) count++;
+        if (TestDonSettings.chunkFinder) count++;
+
+        return count;
+    }
+
     private boolean inside(
-            double mouseX,
-            double mouseY,
-            int x,
-            int y,
-            int w,
-            int h
+            double mx, double my,
+            int x, int y, int w, int h
     ) {
-        return mouseX >= x && mouseX <= x + w
-            && mouseY >= y && mouseY <= y + h;
-    }
-
-    private void calculateLayout() {
-        panelW = Math.min(width - 16, 780);
-        panelH = Math.min(height - 16, 560);
-
-        panelX = (width - panelW) / 2;
-        panelY = (height - panelH) / 2;
-
-        compact = panelW < 620;
-    }
-
-    private int getContentX() {
-        return panelX + (compact ? 105 : 122);
-    }
-
-    private int getContentWidth() {
-        if (compact) {
-            return panelW - 117;
-        }
-
-        return panelW - 250;
+        return mx >= x && mx <= x + w
+            && my >= y && my <= y + h;
     }
 
     @Override
@@ -149,87 +158,104 @@ public final class TestDonMenuScreen extends Screen {
         // Header
         context.fill(
             panelX, panelY,
-            panelX + panelW, panelY + 42,
+            panelX + panelW, panelY + 40,
             0xFF0D1524
         );
 
         context.drawText(
             textRenderer,
             "TEST DON",
-            panelX + 14,
+            panelX + 12,
             panelY + 10,
             0xFF55B9FF,
             false
         );
 
-        context.drawText(
-            textRenderer,
-            "CLIENT MOD",
-            panelX + 105,
-            panelY + 15,
-            0xFF8998AE,
-            false
-        );
+        if (!tiny) {
+            context.drawText(
+                textRenderer,
+                "CLIENT MOD",
+                panelX + 105,
+                panelY + 14,
+                0xFF8998AE,
+                false
+            );
+        }
 
         // Sidebar
-        int sideX = panelX + 7;
-        int sideY = panelY + 55;
+        int sideX = panelX + 5;
+        int sideY = panelY + 49;
+        int sideButtonW = sidebarW - 9;
 
         context.drawText(
             textRenderer,
             "CATEGORIES",
-            sideX + 5,
+            sideX + 4,
             sideY,
             0xFF71839B,
             false
         );
 
+        int categoryGap = tiny ? 23 : 26;
+
         for (int i = 0; i < CATEGORIES.length; i++) {
             String category = CATEGORIES[i];
 
-            int cy = sideY + 20 + i * 27;
+            int cy = sideY + 19 + i * categoryGap;
+
+            if (cy + 21 > panelY + panelH - 5) {
+                break;
+            }
 
             boolean selected =
                 category.equals(selectedCategory);
 
             boolean hovered = inside(
                 mouseX, mouseY,
-                sideX, cy, 92, 23
+                sideX, cy,
+                sideButtonW, 21
             );
 
             if (selected) {
                 context.fill(
                     sideX, cy,
-                    sideX + 92, cy + 23,
+                    sideX + sideButtonW, cy + 21,
                     0xFF17345C
                 );
             } else if (hovered) {
                 context.fill(
                     sideX, cy,
-                    sideX + 92, cy + 23,
+                    sideX + sideButtonW, cy + 21,
                     0xFF172334
                 );
             }
 
+            String label = category;
+
+            if (tiny) {
+                label = switch (category) {
+                    case "MOVEMENT" -> "MOVE";
+                    case "FAVORITES" -> "FAVS";
+                    default -> category;
+                };
+            }
+
             context.drawText(
                 textRenderer,
-                category,
-                sideX + 6,
-                cy + 7,
+                label,
+                sideX + 5,
+                cy + 6,
                 selected ? 0xFF65BDFF : 0xFF9AA9BD,
                 false
             );
         }
 
         // Main content
-        int contentX = getContentX();
-        int contentW = getContentWidth();
-
         context.drawText(
             textRenderer,
             selectedCategory,
             contentX,
-            panelY + 55,
+            panelY + 49,
             0xFFFFFFFF,
             false
         );
@@ -238,30 +264,24 @@ public final class TestDonMenuScreen extends Screen {
             textRenderer,
             "MODULES",
             contentX,
-            panelY + 70,
+            panelY + 65,
             0xFF71839B,
             false
         );
 
         String[] modules = getModules();
 
-        int cardGap = 9;
-        int cardH = 58;
-        int startY = panelY + 91;
-
         int columns = compact ? 1 : 2;
-        int cardW = (contentW - cardGap) / columns;
+        int cardGap = tiny ? 4 : 8;
+        int cardH = compact ? (tiny ? 35 : 42) : 58;
+        int rowGap = compact ? 5 : 9;
 
-        if (modules.length == 0) {
-            context.drawText(
-                textRenderer,
-                "No modules in this category",
-                contentX + 5,
-                startY + 15,
-                0xFF8998AE,
-                false
-            );
-        }
+        int cardW = Math.max(
+            1,
+            (contentW - cardGap * (columns - 1)) / columns
+        );
+
+        int startY = panelY + 84;
 
         for (int i = 0; i < modules.length; i++) {
             String module = modules[i];
@@ -273,7 +293,7 @@ public final class TestDonMenuScreen extends Screen {
                 contentX + column * (cardW + cardGap);
 
             int cardY =
-                startY + row * (cardH + 9);
+                startY + row * (cardH + rowGap);
 
             boolean enabled = isEnabled(module);
 
@@ -283,14 +303,14 @@ public final class TestDonMenuScreen extends Screen {
                 cardW, cardH
             );
 
-            // Card background
+            // Card
             context.fill(
                 cardX, cardY,
                 cardX + cardW, cardY + cardH,
                 hovered ? 0xFF1B2B40 : 0xFF111C2B
             );
 
-            // Blue indicator
+            // Blue line
             context.fill(
                 cardX, cardY,
                 cardX + 2, cardY + cardH,
@@ -300,44 +320,35 @@ public final class TestDonMenuScreen extends Screen {
             context.drawText(
                 textRenderer,
                 module,
-                cardX + 9,
-                cardY + 10,
+                cardX + 8,
+                cardY + (compact ? 5 : 10),
                 0xFFE7EDF7,
                 false
             );
 
-            String description = switch (module) {
-                case "Entity ESP" ->
-                    "Highlights entities";
+            if (!tiny) {
+                String description = switch (module) {
+                    case "Entity ESP" -> "Highlights entities";
+                    case "Chest ESP" -> "Highlights loaded chests";
+                    case "Sound ESP" -> "Shows sound locations";
+                    case "Through Walls" -> "See markers through blocks";
+                    case "Chunk Finder" -> "Finds storage concentrations";
+                    default -> "Test Don module";
+                };
 
-                case "Chest ESP" ->
-                    "Highlights loaded chests";
+                context.drawText(
+                    textRenderer,
+                    description,
+                    cardX + 8,
+                    cardY + (compact ? 22 : 32),
+                    0xFF8293A9,
+                    false
+                );
+            }
 
-                case "Sound ESP" ->
-                    "Shows sound locations";
-
-                case "Through Walls" ->
-                    "See markers through blocks";
-
-                case "Chunk Finder" ->
-                    "Finds storage concentrations";
-
-                default ->
-                    "Test Don module";
-            };
-
-            context.drawText(
-                textRenderer,
-                description,
-                cardX + 9,
-                cardY + 32,
-                0xFF8293A9,
-                false
-            );
-
-            // Toggle switch
-            int toggleX = cardX + cardW - 39;
-            int toggleY = cardY + 12;
+            // Toggle
+            int toggleX = cardX + cardW - 36;
+            int toggleY = cardY + (cardH - 17) / 2;
 
             context.fill(
                 toggleX, toggleY,
@@ -357,16 +368,10 @@ public final class TestDonMenuScreen extends Screen {
 
         // Quick actions
         if (compact) {
-            int actionY = panelY + panelH - 48;
-            int actionW = (contentW - 8) / 2;
-
-            context.drawText(
-                textRenderer,
-                "QUICK ACTIONS",
-                contentX,
-                actionY - 15,
-                0xFF71839B,
-                false
+            int actionY = panelY + panelH - 28;
+            int actionGap = 6;
+            int actionW = Math.max(
+                1, (contentW - actionGap) / 2
             );
 
             drawAction(
@@ -377,11 +382,10 @@ public final class TestDonMenuScreen extends Screen {
 
             drawAction(
                 context, mouseX, mouseY,
-                contentX + actionW + 8,
+                contentX + actionW + actionGap,
                 actionY,
                 actionW, "DISABLE ALL"
             );
-
         } else {
             int rightX = panelX + panelW - 112;
 
@@ -389,20 +393,20 @@ public final class TestDonMenuScreen extends Screen {
                 textRenderer,
                 "QUICK ACTIONS",
                 rightX,
-                panelY + 58,
+                panelY + 49,
                 0xFF71839B,
                 false
             );
 
             drawAction(
                 context, mouseX, mouseY,
-                rightX, panelY + 80,
+                rightX, panelY + 72,
                 100, "ENABLE ALL"
             );
 
             drawAction(
                 context, mouseX, mouseY,
-                rightX, panelY + 108,
+                rightX, panelY + 99,
                 100, "DISABLE ALL"
             );
 
@@ -410,7 +414,7 @@ public final class TestDonMenuScreen extends Screen {
                 textRenderer,
                 "CLIENT STATS",
                 rightX,
-                panelY + 166,
+                panelY + 145,
                 0xFF71839B,
                 false
             );
@@ -419,7 +423,7 @@ public final class TestDonMenuScreen extends Screen {
                 textRenderer,
                 "MODULES: 5",
                 rightX,
-                panelY + 185,
+                panelY + 164,
                 0xFF9AA9BD,
                 false
             );
@@ -428,25 +432,13 @@ public final class TestDonMenuScreen extends Screen {
                 textRenderer,
                 "ENABLED: " + getEnabledCount(),
                 rightX,
-                panelY + 201,
+                panelY + 181,
                 0xFF55B9FF,
                 false
             );
         }
 
         super.render(context, mouseX, mouseY, delta);
-    }
-
-    private int getEnabledCount() {
-        int count = 0;
-
-        if (TestDonSettings.entities) count++;
-        if (TestDonSettings.chests) count++;
-        if (TestDonSettings.sounds) count++;
-        if (TestDonSettings.throughWalls) count++;
-        if (TestDonSettings.chunkFinder) count++;
-
-        return count;
     }
 
     private void drawAction(
@@ -489,36 +481,46 @@ public final class TestDonMenuScreen extends Screen {
 
         calculateLayout();
 
-        double mouseX = click.x();
-        double mouseY = click.y();
+        double mx = click.x();
+        double my = click.y();
 
-        // Sidebar selection
-        int sideX = panelX + 7;
-        int sideY = panelY + 55;
+        // Category buttons
+        int sideX = panelX + 5;
+        int sideY = panelY + 49;
+        int sideButtonW = sidebarW - 9;
+        int categoryGap = tiny ? 23 : 26;
 
         for (int i = 0; i < CATEGORIES.length; i++) {
-            int cy = sideY + 20 + i * 27;
+            int cy = sideY + 19 + i * categoryGap;
+
+            if (cy + 21 > panelY + panelH - 5) {
+                break;
+            }
 
             if (inside(
-                    mouseX, mouseY,
-                    sideX, cy, 92, 23
+                    mx, my,
+                    sideX, cy,
+                    sideButtonW, 21
             )) {
                 selectedCategory = CATEGORIES[i];
                 return true;
             }
         }
 
-        // Module cards
-        int contentX = getContentX();
-        int contentW = getContentWidth();
-
+        // Module buttons
         String[] modules = getModules();
 
         int columns = compact ? 1 : 2;
-        int cardGap = 9;
-        int cardH = 58;
-        int cardW = (contentW - cardGap) / columns;
-        int startY = panelY + 91;
+        int cardGap = tiny ? 4 : 8;
+        int cardH = compact ? (tiny ? 35 : 42) : 58;
+        int rowGap = compact ? 5 : 9;
+
+        int cardW = Math.max(
+            1,
+            (contentW - cardGap * (columns - 1)) / columns
+        );
+
+        int startY = panelY + 84;
 
         for (int i = 0; i < modules.length; i++) {
             int column = i % columns;
@@ -528,10 +530,10 @@ public final class TestDonMenuScreen extends Screen {
                 contentX + column * (cardW + cardGap);
 
             int cardY =
-                startY + row * (cardH + 9);
+                startY + row * (cardH + rowGap);
 
             if (inside(
-                    mouseX, mouseY,
+                    mx, my,
                     cardX, cardY,
                     cardW, cardH
             )) {
@@ -542,11 +544,14 @@ public final class TestDonMenuScreen extends Screen {
 
         // Quick actions
         if (compact) {
-            int actionY = panelY + panelH - 48;
-            int actionW = (contentW - 8) / 2;
+            int actionY = panelY + panelH - 28;
+            int actionGap = 6;
+            int actionW = Math.max(
+                1, (contentW - actionGap) / 2
+            );
 
             if (inside(
-                    mouseX, mouseY,
+                    mx, my,
                     contentX, actionY,
                     actionW, 22
             )) {
@@ -555,21 +560,20 @@ public final class TestDonMenuScreen extends Screen {
             }
 
             if (inside(
-                    mouseX, mouseY,
-                    contentX + actionW + 8,
+                    mx, my,
+                    contentX + actionW + actionGap,
                     actionY,
                     actionW, 22
             )) {
                 setAll(false);
                 return true;
             }
-
         } else {
             int rightX = panelX + panelW - 112;
 
             if (inside(
-                    mouseX, mouseY,
-                    rightX, panelY + 80,
+                    mx, my,
+                    rightX, panelY + 72,
                     100, 22
             )) {
                 setAll(true);
@@ -577,8 +581,8 @@ public final class TestDonMenuScreen extends Screen {
             }
 
             if (inside(
-                    mouseX, mouseY,
-                    rightX, panelY + 108,
+                    mx, my,
+                    rightX, panelY + 99,
                     100, 22
             )) {
                 setAll(false);
@@ -598,4 +602,4 @@ public final class TestDonMenuScreen extends Screen {
 
         return super.keyPressed(input);
     }
-                    }
+                }
