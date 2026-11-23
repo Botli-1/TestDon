@@ -23,50 +23,75 @@ public final class TestDonMenuScreen extends Screen {
     private int sidebarW, contentX, contentW;
     private int cardStartY, cardH, cardGap;
     private int actionY, actionW;
+
+    private int listBottom;
+    private int listHeight;
+    private int scrollOffset = 0;
+    private int maxScroll = 0;
+
     private boolean compact, tiny;
 
     public TestDonMenuScreen() {
         super(Text.literal("Test Don"));
     }
 
-    
-private void calculateLayout() {
-    panelW = Math.min(width - 24,
-        Math.max(280, (int)(width * 0.62)));
+    private void calculateLayout() {
+        panelW = Math.min(width - 24,
+            Math.max(280, (int) (width * 0.62)));
 
-    panelH = Math.min(height - 24,
-        Math.max(220, (int)(height * 0.70)));
+        panelH = Math.min(height - 24,
+            Math.max(220, (int) (height * 0.70)));
 
-    panelX = (width - panelW) / 2;
-    panelY = (height - panelH) / 2;
+        panelX = (width - panelW) / 2;
+        panelY = (height - panelH) / 2;
 
-    compact = panelW < 620 || panelH < 390;
-    tiny = panelW < 390 || panelH < 300;
+        compact = panelW < 620 || panelH < 390;
+        tiny = panelW < 390 || panelH < 300;
 
-    sidebarW = tiny ? 82 : compact ? 105 : 150;
+        sidebarW = tiny ? 82 : compact ? 105 : 150;
 
-    contentX = panelX + sidebarW + 18;
-    contentW = Math.max(1, panelX + panelW - contentX - 16);
+        contentX = panelX + sidebarW + 18;
+        contentW = Math.max(1,
+            panelX + panelW - contentX - 20);
 
-    // More space between headings and module cards
-    cardStartY = panelY + 112;
-    cardH = compact ? (tiny ? 32 : 40) : 50;
-    cardGap = compact ? 7 : 9;
+        // Smaller module cards
+        cardStartY = panelY + 100;
+        cardH = tiny ? 27 : compact ? 32 : 39;
+        cardGap = tiny ? 5 : 6;
 
-    actionY = panelY + panelH - 31;
-    actionW = Math.max(1, (contentW - 10) / 2);
-}
+        actionY = panelY + panelH - 31;
+        actionW = Math.max(1, (contentW - 10) / 2);
 
+        listBottom = actionY - 8;
+        listHeight = Math.max(1, listBottom - cardStartY);
+
+        int totalContentHeight =
+            getModules().length * (cardH + cardGap) - cardGap;
+
+        maxScroll = Math.max(0,
+            totalContentHeight - listHeight);
+
+        clampScroll();
+    }
+
+    private void clampScroll() {
+        scrollOffset = Math.max(0,
+            Math.min(scrollOffset, maxScroll));
+    }
 
     private String[] getModules() {
         return switch (selectedCategory) {
             case "VISUALS" -> new String[] {
-                "Entity ESP", "Chest ESP",
-                "Sound ESP", "Through Walls"
+                "Entity ESP",
+                "Chest ESP",
+                "Sound ESP",
+                "Through Walls"
             };
+
             case "WORLD" -> new String[] {
                 "Chunk Finder"
             };
+
             default -> new String[] {};
         };
     }
@@ -86,12 +111,16 @@ private void calculateLayout() {
         switch (module) {
             case "Entity ESP" ->
                 TestDonSettings.entities = !TestDonSettings.entities;
+
             case "Chest ESP" ->
                 TestDonSettings.chests = !TestDonSettings.chests;
+
             case "Sound ESP" ->
                 TestDonSettings.sounds = !TestDonSettings.sounds;
+
             case "Through Walls" ->
                 TestDonSettings.throughWalls = !TestDonSettings.throughWalls;
+
             case "Chunk Finder" ->
                 TestDonSettings.chunkFinder = !TestDonSettings.chunkFinder;
         }
@@ -107,11 +136,13 @@ private void calculateLayout() {
 
     private int enabledCount() {
         int count = 0;
+
         if (TestDonSettings.entities) count++;
         if (TestDonSettings.chests) count++;
         if (TestDonSettings.sounds) count++;
         if (TestDonSettings.throughWalls) count++;
         if (TestDonSettings.chunkFinder) count++;
+
         return count;
     }
 
@@ -149,11 +180,13 @@ private void calculateLayout() {
             0xFF1B3550);
 
         context.drawText(textRenderer, "TEST DON",
-            panelX + 17, panelY + 14, 0xFF42B9FF, false);
+            panelX + 17, panelY + 14,
+            0xFF42B9FF, false);
 
         if (!tiny) {
             context.drawText(textRenderer, "CLIENT MOD",
-                panelX + 130, panelY + 15, 0xFF899CB5, false);
+                panelX + 130, panelY + 15,
+                0xFF899CB5, false);
         }
 
         // Sidebar
@@ -163,7 +196,8 @@ private void calculateLayout() {
         int categoryGap = panelH < 360 ? 22 : 27;
 
         context.drawText(textRenderer, "CATEGORIES",
-            sideX + 5, sideY, 0xFF8295AE, false);
+            sideX + 5, sideY,
+            0xFF8295AE, false);
 
         for (int i = 0; i < CATEGORIES.length; i++) {
             String category = CATEGORIES[i];
@@ -179,9 +213,11 @@ private void calculateLayout() {
                 context.fill(sideX, cy,
                     sideX + sideButtonW, cy + 22,
                     0xFF193B63);
+
                 context.fill(sideX, cy,
                     sideX + 3, cy + 22,
                     0xFF35B5FF);
+
             } else if (hovered) {
                 context.fill(sideX, cy,
                     sideX + sideButtonW, cy + 22,
@@ -189,6 +225,7 @@ private void calculateLayout() {
             }
 
             String label = category;
+
             if (tiny) {
                 label = switch (category) {
                     case "MOVEMENT" -> "MOVE";
@@ -205,21 +242,37 @@ private void calculateLayout() {
 
         // Content headings
         context.drawText(textRenderer, selectedCategory,
-            contentX, panelY + 55, 0xFFFFFFFF, false);
+            contentX, panelY + 55,
+            0xFFFFFFFF, false);
 
         context.drawText(textRenderer, "MODULES",
-            contentX, panelY + 73, 0xFF8295AE, false);
+            contentX, panelY + 73,
+            0xFF8295AE, false);
 
-        // Module cards
+        // Module cards with scrolling
         String[] modules = getModules();
+
+        context.enableScissor(
+            contentX,
+            cardStartY,
+            contentX + contentW,
+            listBottom
+        );
 
         for (int i = 0; i < modules.length; i++) {
             String module = modules[i];
-            int cardY = cardStartY + i * (cardH + cardGap);
 
-            if (cardY + cardH > actionY - 8) break;
+            int cardY = cardStartY
+                + i * (cardH + cardGap)
+                - scrollOffset;
+
+            if (cardY + cardH < cardStartY
+                    || cardY > listBottom) {
+                continue;
+            }
 
             boolean enabled = isEnabled(module);
+
             boolean hovered = inside(mouseX, mouseY,
                 contentX, cardY, contentW, cardH);
 
@@ -232,36 +285,46 @@ private void calculateLayout() {
                 enabled ? 0xFF35B5FF : 0xFF34465D);
 
             context.drawText(textRenderer, module,
-                contentX + 12, cardY + (compact ? 11 : 10),
+                contentX + 10,
+                cardY + (cardH - 8) / 2,
                 0xFFEAF2FC, false);
 
-            if (!compact) {
-                String description = switch (module) {
-                    case "Entity ESP" -> "Highlights entities";
-                    case "Chest ESP" -> "Highlights loaded chests";
-                    case "Sound ESP" -> "Shows sound locations";
-                    case "Through Walls" -> "See markers through blocks";
-                    case "Chunk Finder" -> "Finds storage concentrations";
-                    default -> "";
-                };
-
-                context.drawText(textRenderer, description,
-                    contentX + 12, cardY + 30,
-                    0xFF8194AD, false);
-            }
-
             // Toggle switch
-            int tx = contentX + contentW - 42;
-            int ty = cardY + (cardH - 18) / 2;
+            int tx = contentX + contentW - 38;
+            int ty = cardY + (cardH - 16) / 2;
 
-            context.fill(tx, ty, tx + 32, ty + 18,
+            context.fill(tx, ty, tx + 28, ty + 16,
                 enabled ? 0xFF168BD0 : 0xFF35465C);
 
-            int knobX = enabled ? tx + 18 : tx + 3;
+            int knobX = enabled ? tx + 15 : tx + 2;
 
-            context.fill(knobX, ty + 3,
-                knobX + 11, ty + 15,
+            context.fill(knobX, ty + 2,
+                knobX + 11, ty + 14,
                 0xFFFFFFFF);
+        }
+
+        context.disableScissor();
+
+        // Scrollbar
+        if (maxScroll > 0) {
+            int barX = contentX + contentW - 3;
+            int barY = cardStartY;
+            int barH = listHeight;
+
+            context.fill(barX, barY,
+                barX + 3, barY + barH,
+                0xFF17283C);
+
+            int thumbH = Math.max(18,
+                barH * barH / (barH + maxScroll));
+
+            int thumbY = barY
+                + (barH - thumbH) * scrollOffset
+                / maxScroll;
+
+            context.fill(barX, thumbY,
+                barX + 3, thumbY + thumbH,
+                0xFF35B5FF);
         }
 
         // Quick actions
@@ -292,11 +355,13 @@ private void calculateLayout() {
         context.fill(x, y, x + w, y + 23,
             hovered ? 0xFF244D75 : 0xFF172B43);
 
-        context.fill(x, y, x + w, y + 1, 0xFF28527A);
+        context.fill(x, y, x + w, y + 1,
+            0xFF28527A);
 
         context.drawCenteredTextWithShadow(
             textRenderer, label,
-            x + w / 2, y + 8, 0xFFE8F3FF
+            x + w / 2, y + 8,
+            0xFFE8F3FF
         );
     }
 
@@ -324,21 +389,28 @@ private void calculateLayout() {
 
             if (inside(mx, my, sideX, cy, sideButtonW, 22)) {
                 selectedCategory = CATEGORIES[i];
+                scrollOffset = 0;
                 return true;
             }
         }
 
         // Module selection
-        String[] modules = getModules();
+        if (inside(mx, my,
+                contentX, cardStartY,
+                contentW, listHeight)) {
 
-        for (int i = 0; i < modules.length; i++) {
-            int cardY = cardStartY + i * (cardH + cardGap);
+            String[] modules = getModules();
 
-            if (cardY + cardH > actionY - 8) break;
+            for (int i = 0; i < modules.length; i++) {
+                int cardY = cardStartY
+                    + i * (cardH + cardGap)
+                    - scrollOffset;
 
-            if (inside(mx, my, contentX, cardY, contentW, cardH)) {
-                toggleModule(modules[i]);
-                return true;
+                if (inside(mx, my,
+                        contentX, cardY, contentW, cardH)) {
+                    toggleModule(modules[i]);
+                    return true;
+                }
             }
         }
 
@@ -359,6 +431,28 @@ private void calculateLayout() {
         return super.mouseClicked(click, doubled);
     }
 
+    // Mouse wheel scrolling
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY,
+            double horizontalAmount, double verticalAmount) {
+
+        calculateLayout();
+
+        if (inside(mouseX, mouseY,
+                contentX, cardStartY,
+                contentW, listHeight)
+                && maxScroll > 0) {
+
+            scrollOffset -= (int) (verticalAmount * 20);
+            clampScroll();
+            return true;
+        }
+
+        return super.mouseScrolled(
+            mouseX, mouseY, horizontalAmount, verticalAmount
+        );
+    }
+
     @Override
     public boolean keyPressed(KeyInput input) {
         if (input.key() == GLFW.GLFW_KEY_ESCAPE) {
@@ -366,7 +460,18 @@ private void calculateLayout() {
             return true;
         }
 
+        if (input.key() == GLFW.GLFW_KEY_DOWN) {
+            scrollOffset += 25;
+            clampScroll();
+            return true;
+        }
+
+        if (input.key() == GLFW.GLFW_KEY_UP) {
+            scrollOffset -= 25;
+            clampScroll();
+            return true;
+        }
+
         return super.keyPressed(input);
     }
                              }
-            
