@@ -10,6 +10,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.BuiltChunkStorage;
 import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.ChunkRenderingDataPreparer;
+import net.minecraft.client.render.Frustum;
 import net.minecraft.client.render.chunk.ChunkBuilder;
 
 import org.spongepowered.asm.mixin.Mixin;
@@ -18,12 +19,37 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.List;
 import java.util.Queue;
 
 @Mixin(ChunkRenderingDataPreparer.class)
 public abstract class ChunkRenderingDataPreparerMixin {
 
     @Unique
+    private boolean testdon$wasFreecamActive = false;
+
+    @Inject(
+        method = "updateSectionOcclusionGraph",
+        at = @At("HEAD")
+    )
+    private void testdon$refreshOnFreecamChange(
+            boolean cullChunks,
+            Camera camera,
+            Frustum frustum,
+            List<ChunkBuilder.BuiltChunk> builtChunks,
+            LongOpenHashSet activeSections,
+            CallbackInfo ci) {
+
+        boolean enabled = TestDonSettings.freecam;
+
+        if (enabled != testdon$wasFreecamActive) {
+            testdon$wasFreecamActive = enabled;
+
+            ((ChunkRenderingDataPreparer) (Object) this)
+                .scheduleTerrainUpdate();
+        }
+    }
+
     @Inject(
         method = "scheduleLater",
         at = @At("HEAD"),
