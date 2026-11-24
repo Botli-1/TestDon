@@ -93,9 +93,9 @@ public final class FreecamController {
         double forwardX = -Math.sin(radians);
         double forwardZ = Math.cos(radians);
 
-        double sideX = Math.cos(radians);
-        double sideZ = Math.sin(radians);
-
+        double sideX = -Math.cos(radians);
+double sideZ = -Math.sin(radians);
+        
         x += (forwardX * forward + sideX * sideways) * speed;
         z += (forwardZ * forward + sideZ * sideways) * speed;
         y += vertical * speed;
