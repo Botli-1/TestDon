@@ -8,7 +8,8 @@
     "RenderPipelinesAccessor",
     "RenderLayerAccessor",
     "CameraMixin",
-    "EntityLookMixin"
+    "EntityLookMixin",
+    "FreecamInputMixin"
   ],
   "injectors": {
     "defaultRequire": 1
