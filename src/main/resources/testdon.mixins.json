@@ -10,7 +10,7 @@
     "EntityLookMixin",
     "ChunkRenderingDataPreparerAccessor",
     "ChunkInfoInvoker",
-    "BuiltChunkStorageInvoker"
+    "BuiltChunkStorageInvoker",
     "ChunkRenderingDataPreparerMixin"
   ],
   "injectors": {
