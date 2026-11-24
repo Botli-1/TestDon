@@ -9,11 +9,11 @@ public final class TestDonClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
 
-        // Register the key before the game starts ticking.
         TestDonKeybinds.initialize();
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             SoundMarkers.expire();
+            FreecamController.tick(client);
 
             while (TestDonKeybinds.OPEN_MENU.wasPressed()) {
                 if (client.currentScreen == null) {
