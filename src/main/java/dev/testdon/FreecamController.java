@@ -20,7 +20,6 @@ public final class FreecamController {
     private static float pitch;
 
     private static double playerX;
-    private static double playerY;
     private static double playerZ;
 
     private static long lastUpdate;
@@ -45,7 +44,6 @@ public final class FreecamController {
             active = true;
 
             playerX = player.getX();
-            playerY = player.getY();
             playerZ = player.getZ();
 
             x = player.getX();
@@ -58,8 +56,13 @@ public final class FreecamController {
             lastUpdate = System.nanoTime();
         }
 
-        player.setPosition(playerX, playerY, playerZ);
-        player.setVelocity(Vec3d.ZERO);
+        // تثبيت اللاعب أفقياً مع السماح له بالسقوط بالجاذبية
+        Vec3d velocity = player.getVelocity();
+        player.setVelocity(0, velocity.y, 0);
+
+        // منع أزرار القفز والتسلل من التأثير على اللاعب
+        client.options.sneakKey.setPressed(false);
+        client.options.jumpKey.setPressed(false);
     }
 
     public static void updateCamera() {
@@ -99,11 +102,14 @@ public final class FreecamController {
         if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_A) == GLFW.GLFW_PRESS)
             sideways--;
 
-        if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_SPACE) == GLFW.GLFW_PRESS)
-            vertical++;
+        boolean shiftDown =
+            GLFW.glfwGetKey(window, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS;
 
-        if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS)
-            vertical--;
+        boolean spaceDown =
+            GLFW.glfwGetKey(window, GLFW.GLFW_KEY_SPACE) == GLFW.GLFW_PRESS;
+
+        if (spaceDown) vertical++;
+        if (shiftDown) vertical--;
 
         double radians = Math.toRadians(yaw);
 
@@ -116,6 +122,9 @@ public final class FreecamController {
         x += (forwardX * forward + sideX * sideways) * speed;
         z += (forwardZ * forward + sideZ * sideways) * speed;
         y += vertical * speed;
+
+        // إلغاء التسلل عن اللاعب أثناء تحريك الكاميرا
+        client.player.setSneaking(false);
     }
 
     public static void rotateByMouse(double deltaX, double deltaY) {
