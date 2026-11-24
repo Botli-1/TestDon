@@ -1,5 +1,4 @@
 
-
 package dev.testdon.mixin;
 
 import dev.testdon.FreecamController;
@@ -29,6 +28,8 @@ public abstract class CameraMixin {
         if (!FreecamController.isActive()) {
             return;
         }
+
+        FreecamController.updateCamera();
 
         thirdPerson = true;
 
