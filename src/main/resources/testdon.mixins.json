@@ -9,7 +9,7 @@
     "RenderLayerAccessor",
     "CameraMixin",
     "EntityLookMixin",
-    "FreecamInputMixin"
+    
   ],
   "injectors": {
     "defaultRequire": 1
