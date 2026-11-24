@@ -9,4 +9,5 @@ public final class TestDonSettings {
     public static boolean sounds = true;
     public static boolean throughWalls = true;
     public static boolean chunkFinder = false;
+    public static boolean freecam = false;
 }
