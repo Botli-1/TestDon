@@ -1,4 +1,5 @@
 
+
 package dev.testdon.mixin;
 
 import dev.testdon.FreecamController;
@@ -15,21 +16,21 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class CameraMixin {
 
     @Shadow
+    private boolean thirdPerson;
+
+    @Shadow
     protected abstract void setPos(double x, double y, double z);
 
     @Shadow
     protected abstract void setRotation(float yaw, float pitch);
 
-    @Inject(
-        method = "update",
-        at = @At("TAIL")
-    )
-    private void testdon$freecam(
-            CallbackInfo ci) {
-
+    @Inject(method = "update", at = @At("TAIL"))
+    private void testdon$freecam(CallbackInfo ci) {
         if (!FreecamController.isActive()) {
             return;
         }
+
+        thirdPerson = true;
 
         setPos(
             FreecamController.getX(),
