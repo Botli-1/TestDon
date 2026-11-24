@@ -54,7 +54,6 @@ public final class TestDonMenuScreen extends Screen {
         contentW = Math.max(1,
             panelX + panelW - contentX - 20);
 
-        // Move module cards up into the removed heading area
         cardStartY = panelY + 55;
 
         cardH = tiny ? 32 : compact ? 38 : 44;
@@ -93,6 +92,10 @@ public final class TestDonMenuScreen extends Screen {
                 "Chunk Finder"
             };
 
+            case "PLAYER" -> new String[] {
+                "Freecam"
+            };
+
             default -> new String[] {};
         };
     }
@@ -104,6 +107,7 @@ public final class TestDonMenuScreen extends Screen {
             case "Sound ESP" -> TestDonSettings.sounds;
             case "Through Walls" -> TestDonSettings.throughWalls;
             case "Chunk Finder" -> TestDonSettings.chunkFinder;
+            case "Freecam" -> TestDonSettings.freecam;
             default -> false;
         };
     }
@@ -124,6 +128,9 @@ public final class TestDonMenuScreen extends Screen {
 
             case "Chunk Finder" ->
                 TestDonSettings.chunkFinder = !TestDonSettings.chunkFinder;
+
+            case "Freecam" ->
+                TestDonSettings.freecam = !TestDonSettings.freecam;
         }
     }
 
@@ -133,6 +140,7 @@ public final class TestDonMenuScreen extends Screen {
         TestDonSettings.sounds = value;
         TestDonSettings.throughWalls = value;
         TestDonSettings.chunkFinder = value;
+        TestDonSettings.freecam = value;
     }
 
     private int enabledCount() {
@@ -143,6 +151,7 @@ public final class TestDonMenuScreen extends Screen {
         if (TestDonSettings.sounds) count++;
         if (TestDonSettings.throughWalls) count++;
         if (TestDonSettings.chunkFinder) count++;
+        if (TestDonSettings.freecam) count++;
 
         return count;
     }
@@ -153,69 +162,67 @@ public final class TestDonMenuScreen extends Screen {
             && my >= y && my <= y + h;
     }
 
-    
-private void fillRoundedRect(
-        DrawContext context,
-        int x, int y, int w, int h,
-        int radius, int color) {
+    private void fillRoundedRect(
+            DrawContext context,
+            int x, int y, int w, int h,
+            int radius, int color) {
 
-    for (int row = 0; row < h; row++) {
-        int dy = 0;
+        for (int row = 0; row < h; row++) {
+            int dy = 0;
 
-        if (row < radius) {
-            dy = radius - row;
-        } else if (row >= h - radius) {
-            dy = radius - (h - 1 - row);
-        }
+            if (row < radius) {
+                dy = radius - row;
+            } else if (row >= h - radius) {
+                dy = radius - (h - 1 - row);
+            }
 
-        int inset = 0;
+            int inset = 0;
 
-        if (dy > 0) {
-            inset = (int) Math.ceil(
-                radius - Math.sqrt(
-                    radius * radius - dy * dy
-                )
+            if (dy > 0) {
+                inset = (int) Math.ceil(
+                    radius - Math.sqrt(
+                        radius * radius - dy * dy
+                    )
+                );
+            }
+
+            context.fill(
+                x + inset,
+                y + row,
+                x + w - inset,
+                y + row + 1,
+                color
             );
         }
-
-        context.fill(
-            x + inset,
-            y + row,
-            x + w - inset,
-            y + row + 1,
-            color
-        );
     }
-}
 
-private void fillTopRoundedRect(
-        DrawContext context,
-        int x, int y, int w, int h,
-        int radius, int color) {
+    private void fillTopRoundedRect(
+            DrawContext context,
+            int x, int y, int w, int h,
+            int radius, int color) {
 
-    for (int row = 0; row < h; row++) {
-        int dy = row < radius ? radius - row : 0;
+        for (int row = 0; row < h; row++) {
+            int dy = row < radius ? radius - row : 0;
 
-        int inset = 0;
+            int inset = 0;
 
-        if (dy > 0) {
-            inset = (int) Math.ceil(
-                radius - Math.sqrt(
-                    radius * radius - dy * dy
-                )
+            if (dy > 0) {
+                inset = (int) Math.ceil(
+                    radius - Math.sqrt(
+                        radius * radius - dy * dy
+                    )
+                );
+            }
+
+            context.fill(
+                x + inset,
+                y + row,
+                x + w - inset,
+                y + row + 1,
+                color
             );
         }
-
-        context.fill(
-            x + inset,
-            y + row,
-            x + w - inset,
-            y + row + 1,
-            color
-        );
     }
-}
-
 
     @Override
     public void render(DrawContext context,
@@ -306,7 +313,7 @@ private void fillTopRoundedRect(
                 false);
         }
 
-        // Module cards: headings removed
+        // Module cards
         String[] modules = getModules();
 
         context.enableScissor(
@@ -527,5 +534,4 @@ private void fillTopRoundedRect(
 
         return super.keyPressed(input);
     }
-                }
-                    
+}
