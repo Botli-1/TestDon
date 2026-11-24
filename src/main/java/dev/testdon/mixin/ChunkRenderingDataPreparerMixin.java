@@ -12,6 +12,10 @@ import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.ChunkRenderingDataPreparer;
 import net.minecraft.client.render.Frustum;
 import net.minecraft.client.render.chunk.ChunkBuilder;
+import net.minecraft.server.network.ChunkFilter;
+import net.minecraft.util.math.ChunkPos;
+import net.minecraft.util.math.ChunkSectionPos;
+import net.minecraft.util.math.MathHelper;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -78,13 +82,40 @@ public abstract class ChunkRenderingDataPreparerMixin {
             return;
         }
 
-        LongOpenHashSet sections =
+        LongOpenHashSet chunks =
             client.world.getChunkManager().getActiveSections();
 
-        LongIterator iterator = sections.iterator();
+        int cameraX = ChunkSectionPos.getSectionCoord(camera.getPos().x);
+        int cameraY = ChunkSectionPos.getSectionCoord(camera.getPos().y);
+        int cameraZ = ChunkSectionPos.getSectionCoord(camera.getPos().z);
+
+        int sectionY = MathHelper.clamp(
+            cameraY,
+            client.world.getBottomSectionCoord(),
+            client.world.getTopSectionCoord()
+        );
+
+        int viewDistance = storage.getViewDistance();
+
+        LongIterator iterator = chunks.iterator();
 
         while (iterator.hasNext()) {
-            long sectionPos = iterator.nextLong();
+            long chunkPos = iterator.nextLong();
+
+            int chunkX = ChunkPos.getPackedX(chunkPos);
+            int chunkZ = ChunkPos.getPackedZ(chunkPos);
+
+            if (!ChunkFilter.isWithinDistanceExcludingEdge(
+                    cameraX,
+                    cameraZ,
+                    viewDistance,
+                    chunkX,
+                    chunkZ)) {
+                continue;
+            }
+
+            long sectionPos =
+                ChunkSectionPos.asLong(chunkX, sectionY, chunkZ);
 
             ChunkBuilder.BuiltChunk chunk =
                 ((BuiltChunkStorageInvoker) storage)
