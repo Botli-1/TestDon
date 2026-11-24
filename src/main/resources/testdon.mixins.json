@@ -11,6 +11,7 @@
     "ChunkRenderingDataPreparerAccessor",
     "ChunkInfoInvoker",
     "BuiltChunkStorageInvoker"
+    "ChunkRenderingDataPreparerMixin"
   ],
   "injectors": {
     "defaultRequire": 1
