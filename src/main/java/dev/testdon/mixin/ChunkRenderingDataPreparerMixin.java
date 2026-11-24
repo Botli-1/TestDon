@@ -85,10 +85,9 @@ public abstract class ChunkRenderingDataPreparerMixin {
         LongOpenHashSet chunks =
             client.world.getChunkManager().getActiveSections();
 
-        int cameraX = ChunkSectionPos.getSectionCoord(camera.getPos().x);
-        int cameraY = ChunkSectionPos.getSectionCoord(camera.getPos().y);
-        int cameraZ = ChunkSectionPos.getSectionCoord(camera.getPos().z);
-
+        int cameraX = ChunkSectionPos.getSectionCoord(camera.getCameraPos().x);
+int cameraY = ChunkSectionPos.getSectionCoord(camera.getCameraPos().y);
+int cameraZ = ChunkSectionPos.getSectionCoord(camera.getCameraPos().z);
         int sectionY = MathHelper.clamp(
             cameraY,
             client.world.getBottomSectionCoord(),
