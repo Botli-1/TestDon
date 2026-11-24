@@ -3,6 +3,7 @@ package dev.testdon;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 
 import org.lwjgl.glfw.GLFW;
@@ -22,18 +23,21 @@ public final class FreecamController {
     private static double playerY;
     private static double playerZ;
 
+    private static long lastUpdate;
+
     private FreecamController() {}
 
     public static void tick(MinecraftClient client) {
         PlayerEntity player = client.player;
 
-        if (player == null || client.getWindow() == null) {
+        if (player == null) {
             active = false;
             return;
         }
 
         if (!TestDonSettings.freecam) {
             active = false;
+            lastUpdate = 0;
             return;
         }
 
@@ -50,21 +54,34 @@ public final class FreecamController {
 
             yaw = player.getYaw();
             pitch = player.getPitch();
+
+            lastUpdate = System.nanoTime();
         }
 
         player.setPosition(playerX, playerY, playerZ);
         player.setVelocity(Vec3d.ZERO);
+    }
 
-        if (client.currentScreen != null) {
+    public static void updateCamera() {
+        if (!active) return;
+
+        MinecraftClient client = MinecraftClient.getInstance();
+
+        if (client.player == null || client.currentScreen != null) {
+            lastUpdate = System.nanoTime();
             return;
         }
 
-        yaw = player.getYaw();
-        pitch = player.getPitch();
+        long now = System.nanoTime();
+
+        double delta = (now - lastUpdate) / 1_000_000_000.0;
+        lastUpdate = now;
+
+        delta = Math.min(delta, 0.05);
 
         long window = client.getWindow().getHandle();
 
-        double speed = 0.45;
+        double speed = 8.0 * delta;
 
         double forward = 0;
         double sideways = 0;
@@ -94,11 +111,22 @@ public final class FreecamController {
         double forwardZ = Math.cos(radians);
 
         double sideX = -Math.cos(radians);
-double sideZ = -Math.sin(radians);
-        
+        double sideZ = -Math.sin(radians);
+
         x += (forwardX * forward + sideX * sideways) * speed;
         z += (forwardZ * forward + sideZ * sideways) * speed;
         y += vertical * speed;
+    }
+
+    public static void rotateByMouse(double deltaX, double deltaY) {
+        if (!active) return;
+
+        float sensitivity = 0.15F;
+
+        yaw += (float) deltaX * sensitivity;
+        pitch += (float) deltaY * sensitivity;
+
+        pitch = MathHelper.clamp(pitch, -90.0F, 90.0F);
     }
 
     public static boolean isActive() {
