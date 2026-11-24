@@ -8,7 +8,7 @@
     "RenderLayerAccessor",
     "CameraMixin",
     "EntityLookMixin",
-    "WorldRendererAccessor"
+    "ChunkRenderingDataPreparerAccessor"
   ],
   "injectors": {
     "defaultRequire": 1
