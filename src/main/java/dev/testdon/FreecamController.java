@@ -31,6 +31,7 @@ public final class FreecamController {
 
         if (player == null) {
             active = false;
+            lastUpdate = 0;
             return;
         }
 
@@ -56,11 +57,21 @@ public final class FreecamController {
             lastUpdate = System.nanoTime();
         }
 
-        // تثبيت اللاعب أفقياً مع السماح له بالسقوط بالجاذبية
+        // تثبيت اللاعب أفقياً مع السماح له بالسقوط
         Vec3d velocity = player.getVelocity();
-        player.setVelocity(0, velocity.y, 0);
 
-        // منع أزرار القفز والتسلل من التأثير على اللاعب
+        double fallVelocity = Math.min(velocity.y, 0.0);
+
+        player.setPosition(
+            playerX,
+            player.getY(),
+            playerZ
+        );
+
+        player.setVelocity(0, fallVelocity, 0);
+
+        // منع التسلل والقفز على اللاعب
+        player.setSneaking(false);
         client.options.sneakKey.setPressed(false);
         client.options.jumpKey.setPressed(false);
     }
@@ -102,14 +113,11 @@ public final class FreecamController {
         if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_A) == GLFW.GLFW_PRESS)
             sideways--;
 
-        boolean shiftDown =
-            GLFW.glfwGetKey(window, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS;
+        if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_SPACE) == GLFW.GLFW_PRESS)
+            vertical++;
 
-        boolean spaceDown =
-            GLFW.glfwGetKey(window, GLFW.GLFW_KEY_SPACE) == GLFW.GLFW_PRESS;
-
-        if (spaceDown) vertical++;
-        if (shiftDown) vertical--;
+        if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS)
+            vertical--;
 
         double radians = Math.toRadians(yaw);
 
@@ -122,9 +130,6 @@ public final class FreecamController {
         x += (forwardX * forward + sideX * sideways) * speed;
         z += (forwardZ * forward + sideZ * sideways) * speed;
         y += vertical * speed;
-
-        // إلغاء التسلل عن اللاعب أثناء تحريك الكاميرا
-        client.player.setSneaking(false);
     }
 
     public static void rotateByMouse(double deltaX, double deltaY) {
