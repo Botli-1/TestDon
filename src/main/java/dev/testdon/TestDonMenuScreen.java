@@ -137,7 +137,7 @@ public final class TestDonMenuScreen extends Screen {
         TestDonSettings.freecam = value;
 
         // Through Walls remains enabled permanently.
-        TestDonSettings.throughWalls = true;
+        
     }
 
     private int enabledCount() {
