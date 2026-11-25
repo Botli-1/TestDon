@@ -1,3 +1,4 @@
+
 {
   "required": true,
   "package": "dev.testdon.mixin",
@@ -12,7 +13,8 @@
     "ChunkInfoInvoker",
     "BuiltChunkStorageInvoker",
     "ChunkRenderingDataPreparerMixin",
-    "ChunkRenderingDataPreparerInvoker"
+    "ChunkRenderingDataPreparerInvoker",
+    "ClientPlayNetworkHandlerAccessor"
   ],
   "injectors": {
     "defaultRequire": 1
