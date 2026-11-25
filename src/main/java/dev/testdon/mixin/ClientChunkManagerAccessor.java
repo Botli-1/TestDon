@@ -10,5 +10,5 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 public interface ClientChunkManagerAccessor {
 
     @Accessor("chunks")
-    Object testdon$getChunkMap();
+    ClientChunkManager.ClientChunkMap testdon$getChunkMap();
 }
