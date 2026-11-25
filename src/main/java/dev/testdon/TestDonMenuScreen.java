@@ -84,8 +84,7 @@ public final class TestDonMenuScreen extends Screen {
             case "VISUALS" -> new String[] {
                 "Entity ESP",
                 "Chest ESP",
-                "Sound ESP",
-                "Through Walls"
+                "Sound ESP"
             };
 
             case "WORLD" -> new String[] {
@@ -105,7 +104,6 @@ public final class TestDonMenuScreen extends Screen {
             case "Entity ESP" -> TestDonSettings.entities;
             case "Chest ESP" -> TestDonSettings.chests;
             case "Sound ESP" -> TestDonSettings.sounds;
-            case "Through Walls" -> TestDonSettings.throughWalls;
             case "Chunk Finder" -> TestDonSettings.chunkFinder;
             case "Freecam" -> TestDonSettings.freecam;
             default -> false;
@@ -123,9 +121,6 @@ public final class TestDonMenuScreen extends Screen {
             case "Sound ESP" ->
                 TestDonSettings.sounds = !TestDonSettings.sounds;
 
-            case "Through Walls" ->
-                TestDonSettings.throughWalls = !TestDonSettings.throughWalls;
-
             case "Chunk Finder" ->
                 TestDonSettings.chunkFinder = !TestDonSettings.chunkFinder;
 
@@ -138,9 +133,11 @@ public final class TestDonMenuScreen extends Screen {
         TestDonSettings.entities = value;
         TestDonSettings.chests = value;
         TestDonSettings.sounds = value;
-        TestDonSettings.throughWalls = value;
         TestDonSettings.chunkFinder = value;
         TestDonSettings.freecam = value;
+
+        // Through Walls remains enabled permanently.
+        TestDonSettings.throughWalls = true;
     }
 
     private int enabledCount() {
@@ -149,7 +146,6 @@ public final class TestDonMenuScreen extends Screen {
         if (TestDonSettings.entities) count++;
         if (TestDonSettings.chests) count++;
         if (TestDonSettings.sounds) count++;
-        if (TestDonSettings.throughWalls) count++;
         if (TestDonSettings.chunkFinder) count++;
         if (TestDonSettings.freecam) count++;
 
