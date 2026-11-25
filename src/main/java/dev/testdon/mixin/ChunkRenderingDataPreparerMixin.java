@@ -3,15 +3,14 @@ package dev.testdon.mixin;
 
 import dev.testdon.TestDonSettings;
 
-import it.unimi.dsi.fastutil.longs.LongIterator;
-import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
-
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.BuiltChunkStorage;
 import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.ChunkRenderingDataPreparer;
 import net.minecraft.client.render.Frustum;
 import net.minecraft.client.render.chunk.ChunkBuilder;
+import net.minecraft.util.math.ChunkSectionPos;
+import net.minecraft.world.chunk.ChunkStatus;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -37,14 +36,15 @@ public abstract class ChunkRenderingDataPreparerMixin {
             Camera camera,
             Frustum frustum,
             List<ChunkBuilder.BuiltChunk> builtChunks,
-            LongOpenHashSet activeSections,
+            it.unimi.dsi.fastutil.longs.LongOpenHashSet activeSections,
             CallbackInfo ci) {
 
         boolean enabled = TestDonSettings.freecam;
 
         if (enabled != testdon$wasFreecamActive) {
             testdon$wasFreecamActive = enabled;
-            ((ChunkRenderingDataPreparer) (Object) this).scheduleTerrainUpdate();
+            ((ChunkRenderingDataPreparer) (Object) this)
+                .scheduleTerrainUpdate();
         }
     }
 
@@ -64,7 +64,7 @@ public abstract class ChunkRenderingDataPreparerMixin {
 
         MinecraftClient client = MinecraftClient.getInstance();
 
-        if (client.world == null) {
+        if (client.world == null || client.player == null) {
             return;
         }
 
@@ -76,26 +76,67 @@ public abstract class ChunkRenderingDataPreparerMixin {
             return;
         }
 
-        LongOpenHashSet sections =
-            client.world.getChunkManager().getActiveSections();
+        int viewDistance = client.options.getClampedViewDistance();
 
-        LongIterator iterator = sections.iterator();
+        int playerChunkX = client.player.getBlockPos().getX() >> 4;
+        int playerChunkZ = client.player.getBlockPos().getZ() >> 4;
 
-        while (iterator.hasNext()) {
-            long sectionPos = iterator.nextLong();
+        int cameraChunkX = camera.getBlockPos().getX() >> 4;
+        int cameraChunkZ = camera.getBlockPos().getZ() >> 4;
 
-            ChunkBuilder.BuiltChunk chunk =
-                ((BuiltChunkStorageInvoker) storage)
-                    .testdon$getRenderedChunk(sectionPos);
+        int cameraSectionY = ChunkSectionPos.getSectionCoord(
+            camera.getBlockPos().getY()
+        );
 
-            if (chunk != null) {
-                queue.add(
-                    ChunkInfoInvoker.testdon$createNode(
-                        chunk,
-                        null,
-                        0
-                    )
+        int bottomSection = client.world.getBottomSectionCoord();
+        int topSection = client.world.getTopSectionCoord() - 1;
+
+        cameraSectionY = Math.max(
+            bottomSection,
+            Math.min(topSection, cameraSectionY)
+        );
+
+        for (int x = playerChunkX - viewDistance;
+             x <= playerChunkX + viewDistance;
+             x++) {
+
+            for (int z = playerChunkZ - viewDistance;
+                 z <= playerChunkZ + viewDistance;
+                 z++) {
+
+                if (Math.abs(x - cameraChunkX) > viewDistance
+                    || Math.abs(z - cameraChunkZ) > viewDistance) {
+                    continue;
+                }
+
+                if (client.world.getChunkManager().getChunk(
+                        x,
+                        z,
+                        ChunkStatus.FULL,
+                        false
+                    ) == null) {
+                    continue;
+                }
+
+                long sectionPos = ChunkSectionPos.asLong(
+                    x,
+                    cameraSectionY,
+                    z
                 );
+
+                ChunkBuilder.BuiltChunk renderedChunk =
+                    ((BuiltChunkStorageInvoker) storage)
+                        .testdon$getRenderedChunk(sectionPos);
+
+                if (renderedChunk != null) {
+                    queue.add(
+                        ChunkInfoInvoker.testdon$createNode(
+                            renderedChunk,
+                            null,
+                            0
+                        )
+                    );
+                }
             }
         }
 
