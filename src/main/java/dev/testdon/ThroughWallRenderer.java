@@ -236,10 +236,7 @@ public final class ThroughWallRenderer {
             ChunkFinder.clear();
         }
 
-        RenderLayer activeLayer =
-            TestDonSettings.throughWalls
-                ? THROUGH_WALLS_LAYER
-                : NORMAL_LAYER;
+        RenderLayer activeLayer = THROUGH_WALLS_LAYER;
 
         VertexConsumer vertex = consumers.getBuffer(activeLayer);
 
