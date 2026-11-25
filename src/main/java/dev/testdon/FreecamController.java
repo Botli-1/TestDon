@@ -22,6 +22,9 @@ public final class FreecamController {
     private static double playerX;
     private static double playerZ;
 
+    private static int lastCenterX = Integer.MIN_VALUE;
+    private static int lastCenterZ = Integer.MIN_VALUE;
+
     private static long lastUpdate;
 
     private FreecamController() {}
@@ -32,12 +35,24 @@ public final class FreecamController {
         if (player == null) {
             active = false;
             lastUpdate = 0;
+            lastCenterX = Integer.MIN_VALUE;
+            lastCenterZ = Integer.MIN_VALUE;
             return;
         }
 
         if (!TestDonSettings.freecam) {
+            if (active) {
+                updateChunkCenter(
+                    client,
+                    MathHelper.floor(player.getX()) >> 4,
+                    MathHelper.floor(player.getZ()) >> 4
+                );
+            }
+
             active = false;
             lastUpdate = 0;
+            lastCenterX = Integer.MIN_VALUE;
+            lastCenterZ = Integer.MIN_VALUE;
             return;
         }
 
@@ -55,11 +70,14 @@ public final class FreecamController {
             pitch = player.getPitch();
 
             lastUpdate = System.nanoTime();
+
+            lastCenterX = Integer.MIN_VALUE;
+            lastCenterZ = Integer.MIN_VALUE;
         }
 
-        // تثبيت اللاعب أفقياً مع السماح له بالسقوط
-        Vec3d velocity = player.getVelocity();
+        updateCameraChunkCenter(client);
 
+        Vec3d velocity = player.getVelocity();
         double fallVelocity = Math.min(velocity.y, 0.0);
 
         player.setPosition(
@@ -70,7 +88,6 @@ public final class FreecamController {
 
         player.setVelocity(0, fallVelocity, 0);
 
-        // منع التسلل والقفز على اللاعب
         player.setSneaking(false);
         client.options.sneakKey.setPressed(false);
         client.options.jumpKey.setPressed(false);
@@ -130,6 +147,35 @@ public final class FreecamController {
         x += (forwardX * forward + sideX * sideways) * speed;
         z += (forwardZ * forward + sideZ * sideways) * speed;
         y += vertical * speed;
+
+        updateCameraChunkCenter(client);
+    }
+
+    private static void updateCameraChunkCenter(MinecraftClient client) {
+        int chunkX = MathHelper.floor(x) >> 4;
+        int chunkZ = MathHelper.floor(z) >> 4;
+
+        updateChunkCenter(client, chunkX, chunkZ);
+    }
+
+    private static void updateChunkCenter(
+        MinecraftClient client,
+        int chunkX,
+        int chunkZ
+    ) {
+        if (client.world == null) return;
+
+        if (chunkX == lastCenterX && chunkZ == lastCenterZ) {
+            return;
+        }
+
+        client.world.getChunkManager().setChunkMapCenter(
+            chunkX,
+            chunkZ
+        );
+
+        lastCenterX = chunkX;
+        lastCenterZ = chunkZ;
     }
 
     public static void rotateByMouse(double deltaX, double deltaY) {
