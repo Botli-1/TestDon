@@ -1,6 +1,8 @@
 
 package dev.testdon;
 
+import dev.testdon.mixin.ClientPlayNetworkHandlerAccessor;
+
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.MathHelper;
@@ -9,6 +11,8 @@ import net.minecraft.util.math.Vec3d;
 import org.lwjgl.glfw.GLFW;
 
 public final class FreecamController {
+
+    private static final int CHUNK_VIEW = 12;
 
     private static boolean active = false;
 
@@ -24,6 +28,7 @@ public final class FreecamController {
 
     private static int lastCenterX = Integer.MIN_VALUE;
     private static int lastCenterZ = Integer.MIN_VALUE;
+    private static int lastLoadDistance = Integer.MIN_VALUE;
 
     private static long lastUpdate;
 
@@ -35,24 +40,18 @@ public final class FreecamController {
         if (player == null) {
             active = false;
             lastUpdate = 0;
-            lastCenterX = Integer.MIN_VALUE;
-            lastCenterZ = Integer.MIN_VALUE;
+            resetChunkTracking();
             return;
         }
 
         if (!TestDonSettings.freecam) {
             if (active) {
-                updateChunkCenter(
-                    client,
-                    MathHelper.floor(player.getX()) >> 4,
-                    MathHelper.floor(player.getZ()) >> 4
-                );
+                restoreChunkView(client);
             }
 
             active = false;
             lastUpdate = 0;
-            lastCenterX = Integer.MIN_VALUE;
-            lastCenterZ = Integer.MIN_VALUE;
+            resetChunkTracking();
             return;
         }
 
@@ -71,11 +70,10 @@ public final class FreecamController {
 
             lastUpdate = System.nanoTime();
 
-            lastCenterX = Integer.MIN_VALUE;
-            lastCenterZ = Integer.MIN_VALUE;
+            resetChunkTracking();
         }
 
-        updateCameraChunkCenter(client);
+        updateCameraChunkView(client);
 
         Vec3d velocity = player.getVelocity();
         double fallVelocity = Math.min(velocity.y, 0.0);
@@ -148,34 +146,124 @@ public final class FreecamController {
         z += (forwardZ * forward + sideZ * sideways) * speed;
         y += vertical * speed;
 
-        updateCameraChunkCenter(client);
+        updateCameraChunkView(client);
     }
 
-    private static void updateCameraChunkCenter(MinecraftClient client) {
-        int chunkX = MathHelper.floor(x) >> 4;
-        int chunkZ = MathHelper.floor(z) >> 4;
+    private static int getServerChunkRadius(MinecraftClient client) {
+        if (client.getNetworkHandler() == null) {
+            return client.options.getClampedViewDistance();
+        }
 
-        updateChunkCenter(client, chunkX, chunkZ);
+        return Math.max(
+            2,
+            ((ClientPlayNetworkHandlerAccessor) client.getNetworkHandler())
+                .testdon$getChunkLoadDistance()
+        );
     }
 
-    private static void updateChunkCenter(
-        MinecraftClient client,
-        int chunkX,
-        int chunkZ
-    ) {
-        if (client.world == null) return;
+    private static void updateCameraChunkView(MinecraftClient client) {
+        if (client.world == null || client.player == null) return;
 
-        if (chunkX == lastCenterX && chunkZ == lastCenterZ) {
+        int playerChunkX = MathHelper.floor(playerX) >> 4;
+        int playerChunkZ = MathHelper.floor(playerZ) >> 4;
+
+        int cameraChunkX = MathHelper.floor(x) >> 4;
+        int cameraChunkZ = MathHelper.floor(z) >> 4;
+
+        int distance = Math.max(
+            Math.abs(cameraChunkX - playerChunkX),
+            Math.abs(cameraChunkZ - playerChunkZ)
+        );
+
+        int baseRadius = MathHelper.clamp(
+            CHUNK_VIEW,
+            2,
+            32
+        );
+
+        int serverRadius = getServerChunkRadius(client);
+
+        int requiredRadius = MathHelper.clamp(
+            Math.max(baseRadius, distance / 2 + 3),
+            2,
+            32
+        );
+
+        int loadDistance = Math.max(
+            serverRadius,
+            requiredRadius
+        );
+
+        int centerX;
+        int centerZ;
+
+        if (distance > baseRadius) {
+            centerX = playerChunkX
+                + (cameraChunkX - playerChunkX) / 2;
+
+            centerZ = playerChunkZ
+                + (cameraChunkZ - playerChunkZ) / 2;
+        } else {
+            centerX = cameraChunkX;
+            centerZ = cameraChunkZ;
+        }
+
+        int margin = loadDistance - serverRadius;
+
+        centerX = MathHelper.clamp(
+            centerX,
+            playerChunkX - margin,
+            playerChunkX + margin
+        );
+
+        centerZ = MathHelper.clamp(
+            centerZ,
+            playerChunkZ - margin,
+            playerChunkZ + margin
+        );
+
+        if (centerX == lastCenterX
+            && centerZ == lastCenterZ
+            && loadDistance == lastLoadDistance) {
             return;
         }
 
         client.world.getChunkManager().setChunkMapCenter(
-            chunkX,
-            chunkZ
+            centerX,
+            centerZ
         );
 
-        lastCenterX = chunkX;
-        lastCenterZ = chunkZ;
+        client.world.getChunkManager().updateLoadDistance(
+            loadDistance
+        );
+
+        lastCenterX = centerX;
+        lastCenterZ = centerZ;
+        lastLoadDistance = loadDistance;
+    }
+
+    private static void restoreChunkView(MinecraftClient client) {
+        if (client.world == null || client.player == null) return;
+
+        int playerChunkX = MathHelper.floor(playerX) >> 4;
+        int playerChunkZ = MathHelper.floor(playerZ) >> 4;
+
+        int serverRadius = getServerChunkRadius(client);
+
+        client.world.getChunkManager().setChunkMapCenter(
+            playerChunkX,
+            playerChunkZ
+        );
+
+        client.world.getChunkManager().updateLoadDistance(
+            serverRadius
+        );
+    }
+
+    private static void resetChunkTracking() {
+        lastCenterX = Integer.MIN_VALUE;
+        lastCenterZ = Integer.MIN_VALUE;
+        lastLoadDistance = Integer.MIN_VALUE;
     }
 
     public static void rotateByMouse(double deltaX, double deltaY) {
