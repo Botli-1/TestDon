@@ -43,6 +43,7 @@ public abstract class ChunkRenderingDataPreparerMixin {
 
         if (enabled != testdon$wasFreecamActive) {
             testdon$wasFreecamActive = enabled;
+
             ((ChunkRenderingDataPreparer) (Object) this)
                 .scheduleTerrainUpdate();
         }
@@ -78,9 +79,6 @@ public abstract class ChunkRenderingDataPreparerMixin {
 
         int viewDistance = client.options.getClampedViewDistance();
 
-        int playerChunkX = client.player.getBlockPos().getX() >> 4;
-        int playerChunkZ = client.player.getBlockPos().getZ() >> 4;
-
         int cameraChunkX = camera.getBlockPos().getX() >> 4;
         int cameraChunkZ = camera.getBlockPos().getZ() >> 4;
 
@@ -96,18 +94,13 @@ public abstract class ChunkRenderingDataPreparerMixin {
             Math.min(topSection, cameraSectionY)
         );
 
-        for (int x = playerChunkX - viewDistance;
-             x <= playerChunkX + viewDistance;
+        for (int x = cameraChunkX - viewDistance;
+             x <= cameraChunkX + viewDistance;
              x++) {
 
-            for (int z = playerChunkZ - viewDistance;
-                 z <= playerChunkZ + viewDistance;
+            for (int z = cameraChunkZ - viewDistance;
+                 z <= cameraChunkZ + viewDistance;
                  z++) {
-
-                if (Math.abs(x - cameraChunkX) > viewDistance
-                    || Math.abs(z - cameraChunkZ) > viewDistance) {
-                    continue;
-                }
 
                 if (client.world.getChunkManager().getChunk(
                         x,
