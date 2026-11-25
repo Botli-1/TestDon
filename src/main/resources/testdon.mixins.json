@@ -12,7 +12,6 @@
     "ChunkInfoInvoker",
     "BuiltChunkStorageInvoker",
     "ChunkRenderingDataPreparerMixin",
-    "ClientChunkMapAccessor",
     "ChunkRenderingDataPreparerInvoker"
   ],
   "injectors": {
